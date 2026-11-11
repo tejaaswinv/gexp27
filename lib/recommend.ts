@@ -152,7 +152,17 @@ export async function generateAnalysis(profile:StudentProfile):Promise<Analysis>
     method:'POST',headers,signal:controller.signal,cache:'no-store',body:JSON.stringify(payload)
    });
   } finally {clearTimeout(timer);}
-  if(!response.ok)throw new Error(`AI provider returned HTTP ${response.status}`);
+  if(!response.ok){
+   let code='';let message='';
+   try{
+    const errorBody=await response.json();
+    code=String(errorBody?.error?.code||errorBody?.error?.type||errorBody?.code||'').slice(0,65);
+    message=String(errorBody?.error?.message||errorBody?.message||'').slice(0,180);
+   }catch{}
+   const safe=(value:string)=>value.replace(/sk-[a-zA-Z0-9_-]+/g,'[redacted]').replace(/[\\r\\n]/g,' ');
+   console.warn('[GEXP AI] Upstream status:',response.status,'code:',safe(code),'message:',safe(message));
+   throw new Error(`AI provider returned HTTP ${response.status}${code?` (${safe(code)})`:''}`);
+  }
   const data=await response.json();
   const rawText=protocol==='anthropic'
    ? (Array.isArray(data?.content)
