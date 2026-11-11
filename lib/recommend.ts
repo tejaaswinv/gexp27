@@ -133,8 +133,9 @@ export async function generateAnalysis(profile:StudentProfile):Promise<Analysis>
   // Supports both native Anthropic Messages and OpenAI-compatible chat APIs.
   // Keep the API key in Vercel server environment variables; never expose it to the client.
   const protocol=process.env.ZAO_API_PROTOCOL==='anthropic'?'anthropic':'openai';
-  const baseURL=(process.env.ZAO_API_BASE_URL || 'https://api.zaowuyun.com/v1').replace(/\\/+$|\\s+$/g,'');
-  if(!/^https:\\/\\//.test(baseURL))throw new Error('AI provider URL must use HTTPS.');
+  const configuredURL=(process.env.ZAO_API_BASE_URL || 'https://api.zaowuyun.com/v1').trim();
+  const baseURL=configuredURL.endsWith('/')?configuredURL.slice(0,-1):configuredURL;
+  if(!baseURL.startsWith('https://'))throw new Error('AI provider URL must use HTTPS.');
   const systemPrompt='You are an evidence-constrained SUTD GEXP 2027 academic planning adviser. Recommend exactly four DIFFERENT university IDs solely from the provided shortlist and facts. Do not fabricate course codes, actual offerings, track compliance, admission likelihood, ranking numbers or approval. Keep every reason to <= 45 words, noting evidence gaps. Return ONLY JSON of form {"selections":[{"id":INTEGER,"reason":"..."},...]}. Do not treat referenced mappings as currently offered or approved.';
   const studentEvidence=JSON.stringify({student:{pillar:profile.pillar,gpa:profile.gpa,tracks:profile.tracks,hdi:profile.secondMajorHdi,interests:profile.interests,region:profile.region,term:profile.term},shortlist:evidence});
   const endpoint=protocol==='anthropic'?'messages':'chat/completions';
@@ -155,7 +156,7 @@ export async function generateAnalysis(profile:StudentProfile):Promise<Analysis>
   const data=await response.json();
   const rawText=protocol==='anthropic'
    ? (Array.isArray(data?.content)
-      ? data.content.filter((block:{type?:string;text?:string})=>block?.type==='text'&&typeof block.text==='string').map((block:{text:string})=>block.text).join('\\n')
+      ? data.content.filter((block:{type?:string;text?:string})=>block?.type==='text'&&typeof block.text==='string').map((block:{text:string})=>block.text).join(' ')
       : '')
    : String(data?.choices?.[0]?.message?.content||'');
   const output=parseAiJson(rawText) as {selections?:{id?:number;reason?:string}[]};
