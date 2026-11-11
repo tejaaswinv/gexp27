@@ -52,19 +52,22 @@ npm run dev
 
 Open `http://localhost:3000`. Without ZaoAPI credentials, the shortlist remains functional using deterministic scoring; the UI clearly labels it **Rules-based analysis**.
 
-## Connect ZaoAPI (造物云)
+## Connect an AI provider (Anthropic Messages or OpenAI-compatible)
 
-Use [Zaowuyun's API developer documentation](https://ai.zaowuyun.com/app/apidoc/zaowuyun-api-documentation.html): `https://api.zaowuyun.com/v1/chat/completions`, HTTP `Authorization: Bearer ...`, OpenAI-compatible chat request. Put only server-side secrets in `.env.local` or the deployment platform:
+The supplied Miaoqu AI configuration uses an Anthropic-compatible endpoint and model names. In Vercel **Project → Settings → Environment Variables**, configure:
 
 ```env
-ZAO_API_KEY=your_token_from_the_zaowuyun_console
-ZAO_MODEL=the_exact_chat_model_id_available_to_your_account
-ZAO_API_BASE_URL=https://api.zaowuyun.com/v1
+ZAO_API_KEY=your_server_side_secret
+ZAO_MODEL=claude-sonnet-5-5
+ZAO_API_PROTOCOL=anthropic
+ZAO_API_BASE_URL=https://api.miaoquai.com/v1
 ```
 
-**Do not put your token in `NEXT_PUBLIC_` variables or frontend JavaScript.** The model ID is deliberately configurable because the provider's available models can change. The server sends *academic inputs* (CGPA, pillar, track preferences, interests, target term, region), but excludes the student's **name, student ID and passport field**. The server limits the AI output to university IDs in its existing, GPA-filtered evidence pool. AI request errors fall back to rules-based recommendations with a visible notice.
+The existing OpenAI-compatible integration remains supported with `ZAO_API_PROTOCOL=openai` and an appropriate HTTPS base URL.
 
-The app does not persist student submissions in a server database; the student's profile is cached in their own browser's local storage. The downloaded forms are generated in memory on request. If deployed publicly with a paid API token, add robust provider-backed rate limits, authentication, CAPTCHA, spending limits and abuse monitoring before promoting the site.
+The backend uses `POST /v1/messages` for Anthropic format and `POST /v1/chat/completions` for OpenAI format. It validates the AI-selected IDs against the already GPA-filtered evidence shortlist, and returns a labelled rules-based shortlist if the model is unavailable. **Do not commit tokens** or prefix credentials with `NEXT_PUBLIC_`.
+
+Only academic inputs (CGPA, pillar, track preferences, interests, target term, region) are sent to the AI provider; name, student ID and passport are excluded. The live project has a Vercel Firewall limit of 12 `POST /api/analyze` requests per 10 minutes per IP, but provider billing limits and key rotation remain essential.
 
 ## Deploy
 
