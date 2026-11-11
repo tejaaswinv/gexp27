@@ -161,6 +161,9 @@ export async function generateAnalysis(profile:StudentProfile):Promise<Analysis>
    }catch{}
    const safe=(value:string)=>value.replace(/sk-[a-zA-Z0-9_-]+/g,'[redacted]').replaceAll(String.fromCharCode(10),' ').replaceAll(String.fromCharCode(13),' ');
    console.warn('[GEXP AI] Upstream status:',response.status,'code:',safe(code),'message:',safe(message));
+   if(response.status===503 && /no available accounts/i.test(message)){
+    throw new Error('AI provider has no available upstream accounts (HTTP 503)');
+   }
    throw new Error(`AI provider returned HTTP ${response.status}${code?` (${safe(code)})`:''}`);
   }
   const data=await response.json();
