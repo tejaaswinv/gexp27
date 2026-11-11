@@ -1,0 +1,28 @@
+name: GEXP provider smoke test
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/gexp-provider-smoke.yml']
+permissions:
+  contents: read
+jobs:
+  analysis:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check live Claude-backed recommendations
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/gexp-profile.json <<'JSON'
+          {"name":"Demo Student","studentId":"","gpa":3.55,"pillar":"CSD","tracks":["Artificial Intelligence","Cybersecurity"],"secondMajorHdi":true,"interests":"machine learning, privacy and human-centred design","region":"Europe","term":"fall","passport":"","homePlan":{"4":[],"5":[],"7":[],"8":[]}}
+          JSON
+          status=$(curl --silent --show-error --location --max-time 70 \
+            --header 'Content-Type: application/json' \
+            --data-binary @/tmp/gexp-profile.json \
+            --output /tmp/gexp-result.json --write-out '%{http_code}' \
+            'https://gexp27.vercel.app/api/analyze')
+          echo "Analysis endpoint returned HTTP ${status}"
+          test "$status" = 200 || exit 1
+          node -e "const r=require('/tmp/gexp-result.json');console.log('Mode:',r.mode,'Model:',r.model||'none','Universities:',r.recommendations?.length);if(r.mode!=='zaoapi'||r.recommendations?.length!==4){console.error('Model fallback or invalid result:',(r.notices||[]).filter(x=>/AI request failed|configured|error/i.test(x)).join('; '));process.exit(1)}"
