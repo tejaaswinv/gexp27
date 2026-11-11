@@ -2,7 +2,7 @@
 
 A polished Next.js web app for SUTD students to discover four viable GEXP choices, inspect historical credit-transfer references, and download filled versions of the **actual SUTD 2023 research-only PDF templates** supplied with the 2027 resource pack.
 
-**Status:** Source implementation complete. Reference extraction and recommendation logic tested. Full Next.js build **was not run in this sandbox** because npm registry DNS was unavailable; run `npm install && npm run build` on a networked machine before sharing or deploying. ZaoAPI is an optional server-side integration and is **not active without your own credentials**.
+**Status:** Deployed successfully to Vercel at **https://gexp27.vercel.app** (production Next.js build verified on 12 November 2026). The custom domain **gexp.tejaaswinv.site** is assigned in Vercel but its Namecheap-hosted DNS must point `gexp` (CNAME) to `6c4f24dd7c71996c.vercel-dns-017.com` before it is reachable. ZaoAPI is optional and is **not active until server-side credentials are configured**.
 
 ## Features
 
@@ -69,12 +69,12 @@ The app does not persist student submissions in a server database; the student's
 ## Deploy
 
 1. Run `npm install && npm run build` on your own machine. Ensure all dependencies install and the UI behaves as expected.
-2. Push this folder to a new private GitHub repository.
-3. Import the repo into **Vercel** using Next.js default settings, then configure the three `ZAO_*` environment variables in the Vercel **server environment**.
+2. Push changes to the existing `tejaaswinv/gexp27` GitHub repository.
+3. The repository is already connected to the **gexp27** Vercel project; configure the three `ZAO_*` environment variables in the Vercel **server environment** to enable paid AI requests.
 4. Deploy to Preview and test a profile, review all four recommendations, export the ZIP and open one PDF before sharing with friends.
 5. Check the SUTD resource-sharing terms before making the reference workbook publicly downloadable. Consider adding invite-based access before wide release.
 
-No production deployment was performed in this handoff.
+Production deployment: `https://gexp27.vercel.app`. Git pushes to `main` deploy automatically through the linked Vercel project. The custom subdomain requires the DNS record described above.
 
 ## Data refresh / rebuild
 
