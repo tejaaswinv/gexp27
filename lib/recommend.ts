@@ -159,7 +159,7 @@ export async function generateAnalysis(profile:StudentProfile):Promise<Analysis>
     code=String(errorBody?.error?.code||errorBody?.error?.type||errorBody?.code||'').slice(0,65);
     message=String(errorBody?.error?.message||errorBody?.message||'').slice(0,180);
    }catch{}
-   const safe=(value:string)=>value.replace(/sk-[a-zA-Z0-9_-]+/g,'[redacted]').replace(/[\\r\\n]/g,' ');
+   const safe=(value:string)=>value.replace(/sk-[a-zA-Z0-9_-]+/g,'[redacted]').replaceAll(String.fromCharCode(10),' ').replaceAll(String.fromCharCode(13),' ');
    console.warn('[GEXP AI] Upstream status:',response.status,'code:',safe(code),'message:',safe(message));
    throw new Error(`AI provider returned HTTP ${response.status}${code?` (${safe(code)})`:''}`);
   }
