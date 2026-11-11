@@ -130,22 +130,35 @@ export async function generateAnalysis(profile:StudentProfile):Promise<Analysis>
    relevantCourses:c.mappings.slice(0,6).map(m=>`${m.hostCode}: ${m.hostTitle} => ${m.sutdCode}: ${m.sutdTitle}`),
    warnings:c.warnings.slice(0,3),tags:c.university.tags||[]
   }));
-  const baseURL=(process.env.ZAO_API_BASE_URL || 'https://api.zaowuyun.com/v1').replace(/\/$/,'');
-  if(!/^https:\/\//.test(baseURL))throw new Error('The ZaoAPI base URL must use HTTPS.');
-  const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),19000);
+  // Supports both native Anthropic Messages and OpenAI-compatible chat APIs.
+  // Keep the API key in Vercel server environment variables; never expose it to the client.
+  const protocol=process.env.ZAO_API_PROTOCOL==='anthropic'?'anthropic':'openai';
+  const baseURL=(process.env.ZAO_API_BASE_URL || 'https://api.zaowuyun.com/v1').replace(/\\/+$|\\s+$/g,'');
+  if(!/^https:\\/\\//.test(baseURL))throw new Error('AI provider URL must use HTTPS.');
+  const systemPrompt='You are an evidence-constrained SUTD GEXP 2027 academic planning adviser. Recommend exactly four DIFFERENT university IDs solely from the provided shortlist and facts. Do not fabricate course codes, actual offerings, track compliance, admission likelihood, ranking numbers or approval. Keep every reason to <= 45 words, noting evidence gaps. Return ONLY JSON of form {"selections":[{"id":INTEGER,"reason":"..."},...]}. Do not treat referenced mappings as currently offered or approved.';
+  const studentEvidence=JSON.stringify({student:{pillar:profile.pillar,gpa:profile.gpa,tracks:profile.tracks,hdi:profile.secondMajorHdi,interests:profile.interests,region:profile.region,term:profile.term},shortlist:evidence});
+  const endpoint=protocol==='anthropic'?'messages':'chat/completions';
+  const headers:Record<string,string>=protocol==='anthropic'
+   ? {'x-api-key':apiKey,'anthropic-version':'2023-06-01','Content-Type':'application/json'}
+   : {Authorization:`Bearer ${apiKey}`,'Content-Type':'application/json'};
+  const payload=protocol==='anthropic'
+   ? {model,max_tokens:1200,system:systemPrompt,messages:[{role:'user',content:studentEvidence}]}
+   : {model,temperature:0.25,max_tokens:1200,messages:[{role:'system',content:systemPrompt},{role:'user',content:studentEvidence}]};
+  const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),35000);
   let response:Response;
   try{
-   response=await fetch(`${baseURL}/chat/completions`,{
-    method:'POST',headers:{Authorization:`Bearer ${apiKey}`,'Content-Type':'application/json'},signal:controller.signal,
-    body:JSON.stringify({model,temperature:0.25,max_tokens:1200,messages:[
-     {role:'system',content:'You are an evidence-constrained SUTD GEXP 2027 academic planning adviser. Recommend exactly four DIFFERENT university IDs solely from the provided shortlist and facts. Do not fabricate course codes, actual offerings, track compliance, admission likelihood, ranking numbers or approval. Keep every reason to <= 45 words, noting evidence gaps. Return ONLY JSON of form {"selections":[{"id":INTEGER,"reason":"..."},...]}. Do not treat referenced mappings as currently offered or approved.'},
-     {role:'user',content:JSON.stringify({student:{pillar:profile.pillar,gpa:profile.gpa,tracks:profile.tracks,hdi:profile.secondMajorHdi,interests:profile.interests,region:profile.region,term:profile.term},shortlist:evidence})}
-    ]})
+   response=await fetch(`${baseURL}/${endpoint}`,{
+    method:'POST',headers,signal:controller.signal,cache:'no-store',body:JSON.stringify(payload)
    });
   } finally {clearTimeout(timer);}
-  if(!response.ok)throw new Error(`ZaoAPI returned HTTP ${response.status}`);
+  if(!response.ok)throw new Error(`AI provider returned HTTP ${response.status}`);
   const data=await response.json();
-  const output=parseAiJson(String(data?.choices?.[0]?.message?.content||'')) as {selections?:{id?:number;reason?:string}[]};
+  const rawText=protocol==='anthropic'
+   ? (Array.isArray(data?.content)
+      ? data.content.filter((block:{type?:string;text?:string})=>block?.type==='text'&&typeof block.text==='string').map((block:{text:string})=>block.text).join('\\n')
+      : '')
+   : String(data?.choices?.[0]?.message?.content||'');
+  const output=parseAiJson(rawText) as {selections?:{id?:number;reason?:string}[]};
   if(!Array.isArray(output?.selections) || output.selections.length<4)throw new Error('Invalid model selection format');
   const allowed=new Map(shortlist.map(s=>[s.university.id,s]));const selected:Recommendation[]=[];
   for(const choice of output.selections){
