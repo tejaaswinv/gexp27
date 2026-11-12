@@ -257,9 +257,14 @@ export function coreCoursesFor(pillar:Pillar,term:number,year:number):Curriculum
 }
 export function courseOptionsFor(pillar:Pillar,term:number,year:number,tracks:string[],hdi:boolean):CurriculumCourse[]{
  const main=curriculumCourses.filter(c=>{
-  if(c.category==='hass')return hdi;
-  if(c.category==='hdi-studio')return hdi&&(term>=7);
-  if(c.category==='hdi-ai')return hdi&&(c.pillar===pillar||term>=7);
+  if(c.category==='hass')return c.terms.length===0||c.terms.includes(term);
+  if(c.category==='hdi-studio')return hdi&&pillar!=='DAI'&&term>=7;
+  if(c.category==='hdi-ai'){
+   const knownTerm=curriculumCourses.find(other=>other.pillar===c.pillar&&other.code===c.code&&other.category!=='hdi-ai'&&other.category!=='hdi-studio'&&other.terms.length>0);
+   return hdi&&(c.pillar===pillar||term>=7)
+    &&(c.terms.length===0||c.terms.includes(term))
+    &&(!knownTerm||knownTerm.terms.includes(term));
+  }
   if(c.pillar!==pillar)return false;
   if(c.cohort&&((year>=2026)!==(c.cohort==='2026-onwards')))return false;
   if(c.category==='core')return c.terms.includes(term);
@@ -279,7 +284,7 @@ export function courseOptionsFor(pillar:Pillar,term:number,year:number,tracks:st
 export function termCourseLabel(c:CurriculumCourse,term:number):string {
  if(c.category==='core')return 'Curriculum core';
  if(c.terms.includes(term))return 'Listed for this term';
- if(c.category==='hass')return 'HDI HASS — check timetable';
+ if(c.category==='hass')return 'HASS / HDI-HCD — check timetable';
  if(c.category==='hdi-ai'||c.category==='hdi-studio')return 'HDI candidate — check requirements/term';
  return 'Elective — check term/prerequisites';
 }
