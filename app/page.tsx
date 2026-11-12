@@ -54,13 +54,46 @@ export default function Page(){
  const nextStep=()=>{setError('');if(step===0 && (!profile.name.trim()||profile.name.trim().length<2)){setError('Enter your full name to continue.');return}if(step===0 && (profile.gpa<0||profile.gpa>5||!Number.isFinite(profile.gpa))){setError('CGPA must be on the SUTD 0–5 scale.');return}setStep(s=>Math.min(s+1,2));};
  const runAnalysis=async()=>{
   setError('');setLoading(true);setAnalysis(null);
+  // Use a finite deadline and a fast, AI-independent recovery endpoint.
+  // A dropped mobile connection must never leave students stuck on "Failed to fetch".
+  const requestAnalysis=async(url:string,limitMs:number):Promise<Analysis>=>{
+   const controller=new AbortController();
+   const timer=window.setTimeout(()=>controller.abort(),limitMs);
+   try{
+    const res=await fetch(url,{
+     method:'POST',
+     headers:{'Content-Type':'application/json'},
+     body:JSON.stringify(profile),
+     cache:'no-store',signal:controller.signal
+    });
+    const json=await res.json().catch(()=>null);
+    if(!res.ok){
+     const issue=new Error(json?.error||`Analysis returned HTTP ${res.status}`);
+     if(res.status>=400&&res.status<500)(issue as Error&{userInput?:boolean}).userInput=true;
+     throw issue;
+    }
+    if(!json?.recommendations?.length)throw new Error('No universities passed the CGPA and term availability filters. Try a different term or check the official GEXP reference.');
+    return json as Analysis;
+   }finally{window.clearTimeout(timer)}
+  };
   try{
-   const res=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(profile)});
-   const json=await res.json();if(!res.ok)throw new Error(json.error||'Could not analyse the profile');
-   if(!json.recommendations?.length)throw new Error('No universities passed the minimum GPA and term availability filters. Try another term or check the official reference.');
-   setAnalysis(json);setSelected(json.recommendations[0].university.id);
+   let result:Analysis;
+   try{
+    result=await requestAnalysis('/api/analyze',28000);
+   }catch(primaryError){
+    if((primaryError as Error&{userInput?:boolean})?.userInput)throw primaryError;
+    // One quick, deterministic recovery attempt. No paid AI provider call.
+    try{
+     result=await requestAnalysis('/api/analyze?mode=rules',9000);
+    }catch(recoveryError){
+     if((recoveryError as Error&{userInput?:boolean})?.userInput)throw recoveryError;
+     throw new Error('The analysis connection was interrupted. Please try again or switch networks; your profile and courses are saved in this browser.');
+    }
+   }
+   setAnalysis(result);setSelected(result.recommendations[0].university.id);
    requestAnimationFrame(()=>document.getElementById('results')?.scrollIntoView({behavior:'smooth',block:'start'}));
-  }catch(e){setError(e instanceof Error?e.message:'Analysis unavailable');}finally{setLoading(false)}
+  }catch(e){setError(e instanceof Error?e.message:'The analysis service could not be reached. Please try again.');}
+  finally{setLoading(false)}
  };
  const updateCourse=(uniId:number,index:number,action:'remove')=>{if(action==='remove')setAnalysis(a=>a?({...a,recommendations:a.recommendations.map(r=>r.university.id===uniId?{...r,mappings:r.mappings.filter((_,i)=>i!==index)}:r)}):a)};
  const addCustom=()=>{
@@ -161,7 +194,7 @@ export default function Page(){
      <p className="roadmap-disclaimer"><ShieldCheck size={15}/> Source: official SUTD curriculum and HDI webpages. Suggestions are not proof of registration availability or pre-approved credit transfer. <a href={courseLinks[profile.pillar]} target="_blank" rel="noopener noreferrer">Check course catalogue <ExternalLink size={13}/></a></p>
     </div>}
     {error&&<div className="error-banner"><TriangleAlert size={17}/>{error}</div>}
-    <div className="form-actions">{step>0?<button className="btn secondary" onClick={()=>{setError('');setStep(s=>s-1)}}><ArrowLeft size={17}/> Back</button>:<span className="form-footnote"><LockKeyhole size={14}/> Student details stay in your browser.</span>}{step<2?<button className="btn primary" onClick={nextStep}>Continue <ArrowRight size={18}/></button>:<button className="btn primary" onClick={runAnalysis} disabled={loading}>{loading?<><span className="loader"/> Analysing GEXP data...</>:<><Sparkles size={18}/> Find my four universities</>}</button>}</div>
+    <div className="form-actions">{step>0?<button className="btn secondary" onClick={()=>{setError('');setStep(s=>s-1)}}><ArrowLeft size={17}/> Back</button>:<span className="form-footnote"><LockKeyhole size={14}/> Student details stay in your browser.</span>}{step<2?<button className="btn primary" onClick={nextStep}>Continue <ArrowRight size={18}/></button>:<button className="btn primary" onClick={runAnalysis} disabled={loading}>{loading?<><span className="loader"/> Checking universities & preparing your plan...</>:<><Sparkles size={18}/> Find my four universities</>}</button>}</div>
    </section><aside className="insight-stack"><div className="data-card"><div className="data-top"><div><span className="tiny-label">YOUR RESEARCH ASSISTANT</span><h3>Built on real<br/>GEXP references.</h3></div><div className="data-asterisk" aria-hidden="true"><Compass size={29} strokeWidth={1.45}/></div></div><div className="data-grid"><Stat value="69" label="Partner options"/><Stat value="6,644" label="Course records"/></div><div className="data-footer"><ShieldCheck size={16}/> Based on your 2027 SUTD resource pack</div></div><div className="advice-card"><div className="advice-icon"><FileText size={19}/></div><h3>One profile.<br/>Four clear plans.</h3><p>We’ll shortlist four destinations, identify historical course equivalents, flag gaps and package the original SUTD templates for you.</p><div className="advice-small"><span>01</span> Personalise & filter <ArrowRight size={14}/></div><div className="advice-small"><span>02</span> Review course matches <ArrowRight size={14}/></div><div className="advice-small"><span>03</span> Download your pack <ArrowRight size={14}/></div></div><div className="safety-note"><Info size={17}/><p><b>Planning, not approval.</b> Course availability and transfers must be verified with the host and your SUTD pillar/HASS coordinator.</p></div></aside></div>}
    {analysis&&<section className="results" id="results"><div className="results-head"><div><div className="eyebrow"><span className="eyebrow-dot"/> MADE FOR {profile.name.split(' ')[0]?.toUpperCase()||'YOU'}</div><h2>Your world of possibilities.</h2><p>Four university choices, grounded in the GEXP dataset and tailored to your academic direction.</p></div><button className="btn outline" onClick={()=>{setAnalysis(null);setStep(0);window.scrollTo({top:0,behavior:'smooth'})}}><UserRound size={17}/> Edit profile</button></div><div className="result-summary"><div className="summary-stat"><Sparkles size={20}/><div><b>{analysis.mode==='zaoapi'?(analysis.model?.toLowerCase().includes('deepseek')?'DeepSeek AI reviewed':'AI reviewed'):'Rules-based analysis'}</b><small>{analysis.mode==='zaoapi'?`Model: ${analysis.model}`:'AI not available — deterministic fallback in use'}</small></div></div><div className="summary-divider"/><div className="summary-stat"><Globe2 size={20}/><div><b>{analysis.candidateCount} candidate universities</b><small>Passing preliminary CGPA and term filters</small></div></div><div className="summary-divider"/><div className="summary-stat"><GraduationCap size={20}/><div><b>{profile.pillar} · {profile.gpa.toFixed(2)} CGPA</b><small>{profile.term==='fall'?'Fall 2027':'Spring 2028'} · {profile.tracks.slice(0,2).join(', ')}</small></div></div></div>
     <div className="choices-head"><h3>Your top four picks</h3><span>Click a university to explore its course mapping</span></div><div className="universities-grid">{analysis.recommendations.map((r,i)=><button className={`uni-choice ${active?.university.id===r.university.id?'active':''}`} key={r.university.id} onClick={()=>{setSelected(r.university.id);setError('')}}><div className="choice-top"><span className="rank-num">0{i+1}</span><span className={`confidence ${r.confidence==='strong'?'complete':r.confidence==='partial'?'partial':'research'}`}>{r.confidence==='strong'?'REFERENCE-READY':r.confidence==='partial'?'PARTIAL MAPPING':'RESEARCH NEEDED'}</span></div><div className="uni-flag" aria-hidden="true"><Globe2 size={23} strokeWidth={1.5}/></div><h4>{r.university.name.replace(/\s*\(NEW\)/,'')}</h4><div className="uni-country"><MapPin size={13}/>{r.university.city}, {r.university.country}</div><div className="choice-bottom"><div><b>{r.pillarCount}<small>/8</small></b><span>Pillar</span></div><div><b>{r.hassCount}<small>/2</small></b><span>HASS</span></div><div className="choice-arrow"><ArrowRight size={17}/></div></div></button>)}</div>
