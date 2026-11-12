@@ -74,7 +74,7 @@ export async function requestProviderText({
     ? {
         model, instructions: systemPrompt, input: userInput,
         // This is constrained university-ID ranking, not a long reasoning task.
-        max_output_tokens: 1200,
+        max_output_tokens: 4096,
         reasoning: { effort: "none" },
         text: { format: { type: "json_object" } },
       }
@@ -126,7 +126,7 @@ export async function requestWithModelFallback(
   const { fallbackModel, ...primary } = request;
   try {
     return {
-      text: await requestProviderText({ ...primary, timeoutMs: 15000 }),
+      text: await requestProviderText({ ...primary, timeoutMs: 12000 }),
       model: primary.model,
       usedFallback: false,
     };
@@ -139,7 +139,7 @@ export async function requestWithModelFallback(
       text: await requestProviderText({
         ...primary,
         model: fallbackModel,
-        timeoutMs: 13000,
+        timeoutMs: 28000,
       }),
       model: fallbackModel,
       usedFallback: true,
