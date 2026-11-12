@@ -75,7 +75,7 @@ export const VERIFIED_PREREQS:PrereqRule[]=[
 ];
 export type PlanIssue={code:string;term:DegreeTerm;type:'prereq'|'offering'|'overload'|'duplicate'|'unverified';severity:'error'|'warning'|'info';detail:string;source?:string};
 export function checkPlan(plan:DegreePlan,profile:StudentProfile):PlanIssue[]{
- const issues:PlanIssue[]; const result:PlanIssue[]=[];
+ const result:PlanIssue[]=[];
  const placed=allModules(plan),positions=new Map<string,number[]>();
  for(const m of placed){const k=key(m.equivalent||m.code);positions.set(k,[...(positions.get(k)||[]),Number(m.term)]);}
  const isBefore=(code:string,t:number)=>{
