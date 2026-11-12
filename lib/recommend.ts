@@ -141,10 +141,14 @@ function parseAiJson(text:string):unknown{
  if(i<0 || j<i)throw new Error('No JSON object in response');
  return JSON.parse(raw.slice(i,j+1));
 }
-export async function generateAnalysis(profile:StudentProfile):Promise<Analysis>{
+export async function generateAnalysis(profile:StudentProfile, options:{rulesOnly?:boolean}={}):Promise<Analysis>{
  const candidates=assembleCandidates(profile);
  const base=candidates.slice(0,4).map(c=>({...c}));
  const notices=['Courses you already placed in Terms 4, 5, 7, or 8 are excluded from proposed exchange transfer mappings.', 'The 2027 reference list records historical in-principle mappings, not current course offerings or approvals.','Check passport restrictions, prerequisites, schedules, actual host enrolment and track/HDI requirements with SUTD.','Generated forms are planning aids; official approval and submission happen in the SUTD Admission Portal.'];
+ if(options.rulesOnly){
+  notices.unshift('AI connection was interrupted or too slow. Here is an immediate rules-based shortlist using the same verified GEXP reference data.');
+  return {recommendations:base,mode:'rules-based',notices,generatedAt:new Date().toISOString(),candidateCount:candidates.length};
+ }
  const apiKey=process.env.SUB2API_API_KEY || process.env.ZAO_API_KEY;
  const model=process.env.SUB2API_MODEL || process.env.ZAO_MODEL || 'deepseek-v4-pro-ga-260813';
  if(!apiKey || !model){
