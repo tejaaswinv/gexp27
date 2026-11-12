@@ -61,10 +61,11 @@ export default function StudyPlanner(){
    const latest=JSON.parse(localStorage.getItem(PROFILE_KEY)||'null')||profile;
    const homePlan={...latest.homePlan};
    (['4','5','7','8'] as const).forEach(term=>{
-    homePlan[term]=plan.terms[term].filter(c=>c.code||c.title).slice(0,5).map(c=>({
-     code:c.origin==='exchange'&&c.equivalent?c.equivalent:c.code,
-     title:c.title
-    }));
+    // The legacy GEXP PDF treats these four terms as local studies.
+    // Never silently insert host/exchange subjects into those form fields.
+    homePlan[term]=term===plan.exchangeTerm?[]:plan.terms[term]
+      .filter(c=>c.origin!=='exchange'&&(c.code||c.title))
+      .slice(0,5).map(c=>({code:c.code,title:c.title}));
    });
    localStorage.setItem(PROFILE_KEY,JSON.stringify({...latest,homePlan}));
   }catch{}
@@ -227,6 +228,7 @@ export default function StudyPlanner(){
      })}
     </div>
     <div className="degree-footer-hint"><ShieldCheck size={17}/> Exchange terms accept courses outside the local SUTD offering calendar. Host syllabi, prerequisites and transfer approval still require verification.</div>
+    {plan.exchangeTerm!=='6'&&<div className="degree-nonstandard-warning"><TriangleAlert size={18}/><span>Your exchange term is Term {plan.exchangeTerm}. The current GEXP PDF export template is arranged for Term 6 exchange. Do not rely on its term labels without manually reviewing and adapting the forms with SUTD.</span></div>}
     <section className="degree-review">
      <div className="degree-panel-title"><div><span className="degree-eyebrow">02 / CHECK YOUR PLAN</span><h2>Plan health & requirements</h2></div>
       <button className={onlyIssues?'selected':''} onClick={()=>setOnlyIssues(v=>!v)}><TriangleAlert size={16}/> {onlyIssues?'Show progress':'Only warnings'}</button></div>
