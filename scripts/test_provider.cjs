@@ -10,7 +10,7 @@ const js = ts.transpileModule(source, {
 const mod = { exports: {} };
 const loaded = new Function("module", "exports", "require", js);
 loaded(mod, mod.exports, require);
-const { extractModelText, requestProviderText } = mod.exports;
+const { extractModelText, requestProviderText, requestWithModelFallback } = mod.exports;
 
 const valid = '{"selections":[{"id":1,"reason":"Strong evidence for the tracks."},{"id":2,"reason":"Course mapping is available."},{"id":3,"reason":"Regional preference match."},{"id":4,"reason":"Relevant interdisciplinary work."}]}';
 const responseFixture = {
@@ -47,6 +47,7 @@ assert.equal(extractModelText({ content: [{ type: "text", text: valid }] }, "ant
       assert.equal(body.input, cfg.userInput);
       assert.equal(body.instructions, cfg.systemPrompt);
       assert.equal(body.text.format.type, "json_object");
+      assert.equal(body.reasoning.effort, "none");
       assert.equal(body.messages, undefined);
       assert.equal(body.stream, undefined);
       return Response.json(responseFixture);
@@ -63,5 +64,31 @@ assert.equal(extractModelText({ content: [{ type: "text", text: valid }] }, "ant
     }),
     /no available upstream accounts/,
   );
+  let fallbackRequests = 0;
+  const failover = await requestWithModelFallback({
+    ...cfg,
+    fallbackModel: "deepseek-v4-1-flash-260910",
+    fetchImpl: async (_url, options) => {
+      const body = JSON.parse(options.body);
+      fallbackRequests++;
+      if (fallbackRequests === 1) {
+        assert.equal(body.model, "deepseek-v4-pro-ga-260813");
+        return Response.json({ error: { code: "api_error", message: "upstream unavailable" } }, { status: 503 });
+      }
+      assert.equal(body.model, "deepseek-v4-1-flash-260910");
+      return Response.json(responseFixture);
+    },
+  });
+  assert.equal(fallbackRequests, 2);
+  assert.equal(failover.model, "deepseek-v4-1-flash-260910");
+  assert.equal(failover.usedFallback, true);
+  assert.equal(failover.text, valid);
+  const noFailover = await requestWithModelFallback({
+    ...cfg,
+    fallbackModel: "deepseek-v4-1-flash-260910",
+    fetchImpl: async () => Response.json(responseFixture),
+  });
+  assert.equal(noFailover.model, cfg.model);
+  assert.equal(noFailover.usedFallback, false);
   console.log("DeepSeek Responses adapter tests passed.");
 })().catch((err) => { console.error(err); process.exitCode = 1; });

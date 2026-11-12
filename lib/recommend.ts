@@ -1,6 +1,6 @@
 import { coursesFor,universities } from './catalog';
 import type { Analysis,Course,Recommendation,StudentProfile,University } from './types';
-import { requestProviderText, type ProviderProtocol } from './ai-provider';
+import { requestWithModelFallback, type ProviderProtocol } from './ai-provider';
 
 const trackWords:Record<string,string[]> = {
  'Artificial Intelligence':['artificial intelligence','machine learning','deep learning','neural','data science','computer vision','language processing','data mining','ai','intelligent'],
@@ -140,9 +140,12 @@ export async function generateAnalysis(profile:StudentProfile):Promise<Analysis>
   const baseURL=process.env.SUB2API_BASE_URL || process.env.ZAO_API_BASE_URL || 'https://api.miaoquai.com/v1';
   const systemPrompt='You are an evidence-constrained SUTD GEXP 2027 academic planning adviser. Recommend exactly four DIFFERENT university IDs solely from the provided shortlist and facts. Do not fabricate course codes, actual offerings, track compliance, admission likelihood, ranking numbers or approval. Keep every reason to <= 45 words, noting evidence gaps. Return ONLY JSON of form {"selections":[{"id":INTEGER,"reason":"..."}]}. Do not treat referenced mappings as currently offered or approved.';
   const studentEvidence=JSON.stringify({student:{pillar:profile.pillar,gpa:profile.gpa,tracks:profile.tracks,hdi:profile.secondMajorHdi,interests:profile.interests,region:profile.region,term:profile.term},shortlist:evidence});
-  const rawText=await requestProviderText({
+  const generated=await requestWithModelFallback({
    apiKey,model,protocol,baseUrl:baseURL,systemPrompt,userInput:studentEvidence,
+   fallbackModel: process.env.ZAO_FALLBACK_MODEL || 'deepseek-v4-1-flash-260910',
   });
+  const rawText=generated.text;
+  if(generated.usedFallback)notices.unshift('DeepSeek Pro was unavailable; V4.1 Flash generated this AI-assisted ranking.');
   const output=parseAiJson(rawText) as {selections?:{id?:number;reason?:string}[]};
   if(!Array.isArray(output?.selections) || output.selections.length<4)throw new Error('Invalid model selection format');
   const allowed=new Map(shortlist.map(s=>[s.university.id,s]));const selected:Recommendation[]=[];
@@ -153,7 +156,7 @@ export async function generateAnalysis(profile:StudentProfile):Promise<Analysis>
    selected.push({...c,reason}); if(selected.length===4)break;
   }
   if(selected.length<4)throw new Error('Model did not select four unique valid universities');
-  return {recommendations:selected,mode:'zaoapi',model,notices,generatedAt:new Date().toISOString(),candidateCount:candidates.length};
+  return {recommendations:selected,mode:'zaoapi',model:generated.model,notices,generatedAt:new Date().toISOString(),candidateCount:candidates.length};
  } catch(err){
   notices.unshift(`AI request failed (${err instanceof Error?err.message:'unavailable'}); using the rules-based shortlist instead.`);
   return {recommendations:base,mode:'rules-based',notices,generatedAt:new Date().toISOString(),candidateCount:candidates.length};

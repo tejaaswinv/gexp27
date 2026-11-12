@@ -73,8 +73,9 @@ export async function requestProviderText({
   const payload = protocol === "responses"
     ? {
         model, instructions: systemPrompt, input: userInput,
-        max_output_tokens: 2400,
-        // DeepSeek V4's Responses API accepts JSON mode and is stateless.
+        // This is constrained university-ID ranking, not a long reasoning task.
+        max_output_tokens: 1200,
+        reasoning: { effort: "none" },
         text: { format: { type: "json_object" } },
       }
     : protocol === "anthropic"
@@ -112,4 +113,36 @@ export async function requestProviderText({
       (code ? " (" + sanitized(code) + ")" : ""));
   }
   return extractModelText(await response.json(), protocol);
+}
+
+
+/**
+ * Keep GEXP responsive when the Pro channel has exhausted capacity or stalls.
+ * Never label a fallback as Pro: return the actual model used to generate text.
+ */
+export async function requestWithModelFallback(
+  request: ProviderRequest & { fallbackModel?: string },
+): Promise<{ text: string; model: string; usedFallback: boolean }> {
+  const { fallbackModel, ...primary } = request;
+  try {
+    return {
+      text: await requestProviderText({ ...primary, timeoutMs: 15000 }),
+      model: primary.model,
+      usedFallback: false,
+    };
+  } catch (error) {
+    if (primary.protocol !== "responses" || !fallbackModel || fallbackModel === primary.model) {
+      throw error;
+    }
+    console.warn("[GEXP AI] Primary DeepSeek model unavailable, attempting Flash fallback");
+    return {
+      text: await requestProviderText({
+        ...primary,
+        model: fallbackModel,
+        timeoutMs: 13000,
+      }),
+      model: fallbackModel,
+      usedFallback: true,
+    };
+  }
 }
