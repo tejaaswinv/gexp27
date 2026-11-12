@@ -38,6 +38,14 @@ jobs:
                 --write-out 'status=%{http_code} duration=%{time_total}s size=%{size_download} bytes content-type=%{content_type}\n' \
                 "https://$host/api/analyze" || failures=$((failures+1))
             node -e "try{const p=JSON.parse(require('fs').readFileSync('/tmp/result-post','utf8'));console.log('analysis mode=',p.mode,'recommendations=',p.recommendations?.length??0,'error=',p.error||'none','notice=',(p.notices||[])[0]||'none')}catch(e){console.log('non-JSON analysis response')}" || true
+            echo "Checking deterministic recovery endpoint"
+            curl --silent --show-error --location --max-time 10 \
+                --header 'Content-Type: application/json' \
+                --data-binary @/tmp/profile.json \
+                --output /tmp/result-rules \
+                --write-out 'rules status=%{http_code} duration=%{time_total}s content-type=%{content_type}\n' \
+                "https://$host/api/analyze?mode=rules" || failures=$((failures+1))
+            node -e "try{const p=JSON.parse(require('fs').readFileSync('/tmp/result-rules','utf8'));console.log('rules mode=',p.mode,'recommendations=',p.recommendations?.length??0);if(p.mode!=='rules-based'||p.recommendations?.length!==4)process.exit(1)}catch(e){console.error('Recovery endpoint not working',e.message);process.exit(1)}" || failures=$((failures+1))
             echo "::endgroup::"
           done
           echo "curl failures=$failures"
