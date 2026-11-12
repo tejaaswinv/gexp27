@@ -130,10 +130,10 @@ export default function Page(){
     {step===2&&<div className="term-plan">
      <InfoLine>These courses populate your official-format study plans. The selections below come from the SUTD curriculum, but confirm prerequisites and future offerings with your pillar before submitting.</InfoLine>
      <div className="roadmap-context"><div><strong>{profile.pillar} · AY{profile.matriculationYear??2025}</strong><span>{profile.name.trim()?profile.name.trim().split(' ')[0]+'’s':''} personalised roadmap{profile.tracks.length?' · '+profile.tracks.slice(0,2).join(' / '):''}</span></div><a href={curriculumLinks[profile.pillar]} target="_blank" rel="noopener noreferrer">Official {profile.pillar} curriculum <ExternalLink size={15}/></a></div>
-     {profile.secondMajorHdi&&<div className="roadmap-hdi"><LayoutGrid size={21}/><div><strong>HDI pathway included</strong><p>{getHdiGuidance(profile.pillar)}</p><a href={hdiCurriculumUrl} target="_blank" rel="noopener noreferrer">Check permitted studios, AI and HASS subjects <ExternalLink size={13}/></a></div></div>}
+     {profile.secondMajorHdi&&<div className="roadmap-hdi"><LayoutGrid size={21}/><div><strong>HDI pathway included{profile.pillar==='DAI'&&profile.hdiDomain?` · ${profile.hdiDomain} domain`:''}</strong><p>{getHdiGuidance(profile.pillar)}</p><a href={hdiCurriculumUrl} target="_blank" rel="noopener noreferrer">Check permitted studios, AI and HASS subjects <ExternalLink size={13}/></a></div></div>}
      <div className="term-grid">{(['4','5','7','8'] as const).map(term=>{
       const termNumber=Number(term);
-      const offerings=courseOptionsFor(profile.pillar,termNumber,profile.matriculationYear??2025,profile.tracks,profile.secondMajorHdi);
+      const offerings=courseOptionsFor(profile.pillar,termNumber,profile.matriculationYear??2025,profile.tracks,profile.secondMajorHdi,profile.hdiDomain||'');
       const cores=coreCoursesFor(profile.pillar,termNumber,profile.matriculationYear??2025);
       const rows=profile.homePlan[term];
       const selectedCodes=rows.map(c=>c.code.trim().toLowerCase()).filter(Boolean);
@@ -148,7 +148,7 @@ export default function Page(){
        <label className="course-picker"><span><BookOpen size={15}/> Choose a course from SUTD</span><select defaultValue="" aria-label={`Add a SUTD course for Term ${term}`} disabled={!spaceAvailable} onChange={e=>{const chosen=offerings.find(c=>c.code===e.currentTarget.value);if(chosen)addRoadmapCourse(term,{code:chosen.code,title:chosen.title});e.currentTarget.value='';}}>
         <option value="">Choose a course by code or title…</option>
         {coreOptions.length>0&&<optgroup label="Term core / capstone">{coreOptions.map(c=><option key={c.code} value={c.code} disabled={selectedCodes.includes(c.code.toLowerCase())}>{c.code} — {c.title}</option>)}</optgroup>}
-        {otherOptions.length>0&&<optgroup label="Electives, HASS and HDI candidates (verify timetable)">{otherOptions.map(c=><option key={c.code} value={c.code} disabled={selectedCodes.includes(c.code.toLowerCase())}>{c.code} — {c.title} · {termCourseLabel(c,termNumber)}</option>)}</optgroup>}
+        {otherOptions.length>0&&<optgroup label="Electives & HDI candidates — term must be confirmed">{otherOptions.map(c=><option key={c.code} value={c.code} disabled={selectedCodes.includes(c.code.toLowerCase())}>{c.code} — {c.title} · {termCourseLabel(c,termNumber)}</option>)}</optgroup>}
        </select></label>
        <div className="term-course-list">{rows.length===0&&<p className="term-empty">No courses selected yet. Add a curriculum core or choose from the list.</p>}{rows.map((c,i)=><div className="term-row" key={`${term}-${i}`}>
         <input aria-label={`Term ${term} course code ${i+1}`} placeholder="Course code" value={c.code} onChange={e=>setProfile(p=>({...p,homePlan:{...p.homePlan,[term]:p.homePlan[term].map((row,j)=>j===i?{...row,code:e.target.value}:row)}}))}/>
