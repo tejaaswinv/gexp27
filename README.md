@@ -4,6 +4,29 @@ A polished Next.js web app for SUTD students to discover four viable GEXP choice
 
 **Status:** Deployed successfully to Vercel at **https://gexp27.vercel.app** (production Next.js build verified on 12 November 2026). The custom domain **gexp.tejaaswinv.site** is assigned in Vercel but its Namecheap-hosted DNS must point `gexp` (CNAME) to `6c4f24dd7c71996c.vercel-dns-017.com` before it is reachable. DeepSeek is configured server-side; verify the model with the live provider smoke test before declaring AI service healthy.
 
+## Eight-term study planner (`/study-planner`)
+
+The original **GEXP Atlas** workflow now includes its own eight-term degree planner, implemented independently from the publicly described SUTD Study Planner. This is **not** a copy of the other project's source code, backend, database or UI. Inspired capabilities:
+
+- Eight-term board covering Freshmore, SUTD pillar studies, one configurable exchange term and final-year studies.
+- HTML drag-and-drop between term columns on desktop; equivalent add/move menus for mobile and keyboard/touch navigation.
+- Curated course shelf with search, pillar-specific electives, HASS/HDI choices, term references and custom courses.
+- One-click import of term core subjects plus optional host courses mapped from GEXP's four-university recommendations.
+- Prerequisite checks for a **verified subset** of SUTD courses with official course-page source links; unresolved/equivalent background is a warning, not a block.
+- Immediate warning for known term-offering mismatches, duplicates and overloaded terms. Exchange terms are exempt from *local SUTD term-offering* checks (not from host enrolment or transfer approval).
+- Removal of a course automatically clears courses with verified **mandatory** dependencies. Where alternative credentials or co-requisites may qualify, a warning is used instead of destructive deletion.
+- CSD AI, Security and IoT core tracking based on SUTD's published 2-of-3 rules. Other tracks show approximate related-course progress rather than an unverified award claim.
+- HDI second-major indicator, user-selected minor and manually selected minor-course targets; counts are expressly **not** official graduation eligibility.
+- Autosave to browser local storage, CSV and JSON export, JSON import, and reset.
+- Terms 4/5/7/8 sync into GEXP's existing form to populate the official-format downloadable study-plan PDFs (which have a maximum of five rows per home term).
+
+The source of the comparison product's published feature description is [Yong Jun Lim's project announcement](https://www.linkedin.com/posts/yongjunlim_sutd-finally-has-a-study-planner-heres-activity-7453343505311170561-498o). Its live website could not be read directly from this workspace. Exact hidden behaviours, UI details and full underlying curriculum database have **not** been cloned.
+
+The following verified subset powers specific prerequisite warnings:
+50.002 (10.025 / 10.014), 50.005 (50.002), 50.007 (50.001 + 50.004 or equivalent background), 50.042 (50.005 co-requisite or equivalent), 50.020 (50.042), 50.044 (50.042), 50.055 (machine learning plus deep learning with alternatives), 01.116 (machine learning). Do not treat unflagged courses as confirmed to have no prerequisites.
+
+Sources: [SUTD CSD Security](https://www.sutd.edu.sg/istd/education/undergraduate/specialisation-tracks/security/), [Artificial Intelligence](https://www.sutd.edu.sg/istd/education/undergraduate/specialisation-tracks/artificial-intelligence/), [IoT and Intelligent Systems](https://www.sutd.edu.sg/istd/education/undergraduate/specialisation-tracks/iot-and-intelligent-systems/), [SUTD minors](https://www.sutd.edu.sg/education/undergraduate/minors/), and the individual prerequisite course pages linked directly in `lib/degree-planner.ts`.
+
 ## Features
 
 - Friendly, mobile-responsive onboarding: name, optional student ID, CGPA (/5), pillar, Fall 2027 or Spring 2028, tracks, interests, region, citizenship and HDI second major.
