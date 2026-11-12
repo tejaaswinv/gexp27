@@ -1,5 +1,5 @@
 'use client';
-import {useEffect,useMemo,useState} from 'react';
+import {useEffect,useMemo,useState,type DragEvent,type ChangeEvent} from 'react';
 import Link from 'next/link';
 import {ArrowLeft,ArrowRight,BookOpen,Check,CheckCircle2,ChevronDown,Download,ExternalLink,GraduationCap,GripVertical,Info,Layers3,MapPin,Plus,RotateCcw,Search,ShieldCheck,Sparkles,Trash2,TriangleAlert,Upload, X} from 'lucide-react';
 import type {StudentProfile} from '@/lib/types';
@@ -108,10 +108,10 @@ export default function StudyPlanner(){
    'Removing '+m.code+' also clears confirmed dependent modules: '+result.removed.slice(1).join(', ')+'. Continue?'))return;
   update(result.plan);setNotification('Removed '+result.removed.join(', '));
  };
- const dragStart=(event:React.DragEvent<HTMLElement>,m:PlannedModule,from?:DegreeTerm)=>{
+ const dragStart=(event:DragEvent<HTMLElement>,m:PlannedModule,from?:DegreeTerm)=>{
   event.dataTransfer.effectAllowed='move';event.dataTransfer.setData('application/x-gexp-degree',JSON.stringify({module:m,from}));
  };
- const drop=(event:React.DragEvent<HTMLElement>,term:DegreeTerm)=>{
+ const drop=(event:DragEvent<HTMLElement>,term:DegreeTerm)=>{
   event.preventDefault();setDraggingOver(null);
   try{
    const json=event.dataTransfer.getData('application/x-gexp-degree');
@@ -143,7 +143,7 @@ export default function StudyPlanner(){
   saveText('GEXP_degree_plan_'+(profile.pillar||'SUTD')+'.csv',
    rows.map(row=>row.map(csvValue).join(',')).join('\n'),'text/csv;charset=utf-8');
  };
- const importJson=async(event:React.ChangeEvent<HTMLInputElement>)=>{
+ const importJson=async(event:ChangeEvent<HTMLInputElement>)=>{
   const file=event.currentTarget.files?.[0];if(!file)return;
   if(file.size>200000){setNotification('Plan file must be under 200 KB.');return;}
   try{
