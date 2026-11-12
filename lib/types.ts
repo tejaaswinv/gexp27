@@ -16,6 +16,7 @@ export type Course = {
 };
 export type StudentProfile = {
  name: string; studentId: string; gpa: number; pillar: Pillar; tracks: string[]; secondMajorHdi: boolean;
+ matriculationYear?: number; hdiDomain?: string;
  interests: string; region: string; term: Term; passport: string;
  homePlan: Record<'4'|'5'|'7'|'8', {code:string;title:string}[]>;
 };
