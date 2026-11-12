@@ -117,6 +117,7 @@ export async function requestProviderText({
 
 
 /**
+ * Bound total upstream latency to approximately 23 seconds (5s Pro + 18s Flash).
  * Keep GEXP responsive when the Pro channel has exhausted capacity or stalls.
  * Never label a fallback as Pro: return the actual model used to generate text.
  */
@@ -126,7 +127,7 @@ export async function requestWithModelFallback(
   const { fallbackModel, ...primary } = request;
   try {
     return {
-      text: await requestProviderText({ ...primary, timeoutMs: 12000 }),
+      text: await requestProviderText({ ...primary, timeoutMs: 5000 }),
       model: primary.model,
       usedFallback: false,
     };
@@ -139,7 +140,7 @@ export async function requestWithModelFallback(
       text: await requestProviderText({
         ...primary,
         model: fallbackModel,
-        timeoutMs: 28000,
+        timeoutMs: 18000,
       }),
       model: fallbackModel,
       usedFallback: true,
