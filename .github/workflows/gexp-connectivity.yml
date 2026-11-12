@@ -1,0 +1,44 @@
+name: GEXP connectivity diagnostic
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/gexp-connectivity.yml']
+permissions:
+  contents: read
+jobs:
+  endpoints:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check custom domain and Vercel API routes
+        shell: bash
+        run: |
+          set -uo pipefail
+          cat >/tmp/profile.json <<'JSON'
+          {"name":"Demo Student","studentId":"","gpa":3.56,"pillar":"CSD","tracks":["Artificial Intelligence"],"secondMajorHdi":false,"matriculationYear":2025,"hdiDomain":"","interests":"AI and software","region":"Europe","term":"fall","passport":"","homePlan":{"4":[{"code":"50.001","title":"Information Systems & Programming"}],"5":[],"7":[],"8":[]}}
+          JSON
+          failures=0
+          for host in gexp.tejaaswinv.site gexp27.vercel.app; do
+            echo "::group::Host: $host"
+            for path in / /api/catalog; do
+              echo "Checking https://$host$path"
+              curl --silent --show-error --location --max-time 20 --retry 1 \
+                 -o /tmp/result-get -w 'status=%{http_code} duration=%{time_total}s size=%{size_download} bytes content-type=%{content_type}\n' \
+                 "https://$host$path" || failures=$((failures+1))
+              if [ "$path" = /api/catalog ]; then
+                node -e "try{const p=JSON.parse(require('fs').readFileSync('/tmp/result-get','utf8'));console.log('catalog university count',p.universities?.length??'none')}catch(e){console.log('non-JSON catalog response')}" || true
+              fi
+            done
+            echo "Checking POST analysis (timeout 65 seconds)"
+            curl --silent --show-error --location --max-time 65 \
+                --header 'Content-Type: application/json' \
+                --data-binary @/tmp/profile.json \
+                --output /tmp/result-post \
+                --write-out 'status=%{http_code} duration=%{time_total}s size=%{size_download} bytes content-type=%{content_type}\n' \
+                "https://$host/api/analyze" || failures=$((failures+1))
+            node -e "try{const p=JSON.parse(require('fs').readFileSync('/tmp/result-post','utf8'));console.log('analysis mode=',p.mode,'recommendations=',p.recommendations?.length??0,'error=',p.error||'none','notice=',(p.notices||[])[0]||'none')}catch(e){console.log('non-JSON analysis response')}" || true
+            echo "::endgroup::"
+          done
+          echo "curl failures=$failures"
+          test "$failures" -eq 0
