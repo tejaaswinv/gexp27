@@ -115,7 +115,7 @@ export function checkPlan(plan:DegreePlan,profile:StudentProfile):PlanIssue[]{
      detail:c+' is listed for term(s) '+source.terms.join(', ')+' rather than Term '+term+'. Confirm current offerings.',
      source:source.source});
    }
-   if(term===plan.exchangeTerm&&course.origin!=='exchange')result.push({code:c,term,type:'unverified',severity:'info',
+   if(term===plan.exchangeTerm)result.push({code:c,term,type:'unverified',severity:'info',
     detail:'Exchange-term SUTD course '+c+' needs an approved host equivalent.'});
   }
  }
