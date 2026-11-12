@@ -642,3 +642,35 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 .track-detail-list strong{color:#385b42;font-size:12px}
 .track-detail-list small{color:#7b8a75;font-size:11px;line-height:1.5}
 @media(min-width:780px){.track-detail-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Eight-term planner links inside the main GEXP experience. */
+.storybook-links a.storybook-degree-link{
+ display:inline-flex;align-items:center;justify-content:center;
+ padding:11px 14px;border-radius:11px;background:#e9eee1;
+ color:#315840;font-size:12px;font-weight:800;white-space:nowrap;
+ text-decoration:none;transition:background .25s;
+}
+.storybook-links a.storybook-degree-link:hover{background:#dce7d5}
+.roadmap-full-link{
+ display:flex;justify-content:space-between;align-items:center;gap:16px;
+ padding:19px;margin:0 0 17px;border-radius:14px;
+ border:1px solid #cfdfc5;background:#ecf1e5;
+}
+.roadmap-full-link>div{display:flex;align-items:flex-start;gap:12px}
+.roadmap-full-link>div>svg{flex-shrink:0;color:#5b8b63}
+.roadmap-full-link span{display:flex;flex-direction:column;gap:5px}
+.roadmap-full-link b{font-size:13px;color:#35583e}
+.roadmap-full-link small{font-size:11px;line-height:1.55;color:#769076}
+.roadmap-full-link a{
+ display:inline-flex;align-items:center;gap:8px;
+ flex-shrink:0;border-radius:10px;background:#315540;
+ padding:12px 14px;color:#fffdf4;font-size:11px;font-weight:850;text-decoration:none;
+}
+.roadmap-full-link a:hover{background:#4d7557}
+@media(max-width:1150px){
+ .storybook-links a.storybook-degree-link{font-size:10px;padding:10px}
+}
+@media(max-width:900px){
+ .roadmap-full-link{flex-direction:column;align-items:stretch}
+ .roadmap-full-link a{justify-content:center}
+}
