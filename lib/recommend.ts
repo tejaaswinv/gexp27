@@ -1,5 +1,6 @@
 import { coursesFor,universities } from './catalog';
 import type { Analysis,Course,Recommendation,StudentProfile,University } from './types';
+import { requestProviderText, type ProviderProtocol } from './ai-provider';
 
 const trackWords:Record<string,string[]> = {
  'Artificial Intelligence':['artificial intelligence','machine learning','deep learning','neural','data science','computer vision','language processing','data mining','ai','intelligent'],
@@ -116,9 +117,10 @@ export async function generateAnalysis(profile:StudentProfile):Promise<Analysis>
  const candidates=assembleCandidates(profile);
  const base=candidates.slice(0,4).map(c=>({...c}));
  const notices=['The 2027 reference list records historical in-principle mappings, not current course offerings or approvals.','Check passport restrictions, prerequisites, schedules, actual host enrolment and track/HDI requirements with SUTD.','Generated forms are planning aids; official approval and submission happen in the SUTD Admission Portal.'];
- const apiKey=process.env.ZAO_API_KEY, model=process.env.ZAO_MODEL;
+ const apiKey=process.env.SUB2API_API_KEY || process.env.ZAO_API_KEY;
+ const model=process.env.SUB2API_MODEL || process.env.ZAO_MODEL || 'deepseek-v4-pro';
  if(!apiKey || !model){
-  notices.unshift('ZaoAPI is not configured: showing a transparent rules-based shortlist.');
+  notices.unshift('AI provider key is not configured: showing a transparent rules-based shortlist.');
   return {recommendations:base,mode:'rules-based',notices,generatedAt:new Date().toISOString(),candidateCount:candidates.length};
  }
  try{
@@ -130,48 +132,17 @@ export async function generateAnalysis(profile:StudentProfile):Promise<Analysis>
    relevantCourses:c.mappings.slice(0,6).map(m=>`${m.hostCode}: ${m.hostTitle} => ${m.sutdCode}: ${m.sutdTitle}`),
    warnings:c.warnings.slice(0,3),tags:c.university.tags||[]
   }));
-  // Supports both native Anthropic Messages and OpenAI-compatible chat APIs.
-  // Keep the API key in Vercel server environment variables; never expose it to the client.
-  const protocol=process.env.ZAO_API_PROTOCOL==='anthropic'?'anthropic':'openai';
-  const configuredURL=(process.env.ZAO_API_BASE_URL || 'https://api.zaowuyun.com/v1').trim();
-  const baseURL=configuredURL.endsWith('/')?configuredURL.slice(0,-1):configuredURL;
-  if(!baseURL.startsWith('https://'))throw new Error('AI provider URL must use HTTPS.');
-  const systemPrompt='You are an evidence-constrained SUTD GEXP 2027 academic planning adviser. Recommend exactly four DIFFERENT university IDs solely from the provided shortlist and facts. Do not fabricate course codes, actual offerings, track compliance, admission likelihood, ranking numbers or approval. Keep every reason to <= 45 words, noting evidence gaps. Return ONLY JSON of form {"selections":[{"id":INTEGER,"reason":"..."},...]}. Do not treat referenced mappings as currently offered or approved.';
+  // Codex/Sub2API DeepSeek uses wire_api=responses (POST /v1/responses).
+  // Accept the existing production ZAO_* settings so credentials never need
+  // to be copied or exposed; SUB2API_* vars may override them in future.
+  const rawProtocol=process.env.SUB2API_WIRE_API || process.env.ZAO_API_PROTOCOL || 'responses';
+  const protocol: ProviderProtocol=rawProtocol==='anthropic'?'anthropic':rawProtocol==='openai'?'openai':'responses';
+  const baseURL=process.env.SUB2API_BASE_URL || process.env.ZAO_API_BASE_URL || 'https://api.miaoquai.com/v1';
+  const systemPrompt='You are an evidence-constrained SUTD GEXP 2027 academic planning adviser. Recommend exactly four DIFFERENT university IDs solely from the provided shortlist and facts. Do not fabricate course codes, actual offerings, track compliance, admission likelihood, ranking numbers or approval. Keep every reason to <= 45 words, noting evidence gaps. Return ONLY JSON of form {"selections":[{"id":INTEGER,"reason":"..."}]}. Do not treat referenced mappings as currently offered or approved.';
   const studentEvidence=JSON.stringify({student:{pillar:profile.pillar,gpa:profile.gpa,tracks:profile.tracks,hdi:profile.secondMajorHdi,interests:profile.interests,region:profile.region,term:profile.term},shortlist:evidence});
-  const endpoint=protocol==='anthropic'?'messages':'chat/completions';
-  const headers:Record<string,string>=protocol==='anthropic'
-   ? {'x-api-key':apiKey,'anthropic-version':'2023-06-01','Content-Type':'application/json'}
-   : {Authorization:`Bearer ${apiKey}`,'Content-Type':'application/json'};
-  const payload=protocol==='anthropic'
-   ? {model,max_tokens:1200,system:systemPrompt,messages:[{role:'user',content:studentEvidence}]}
-   : {model,temperature:0.25,max_tokens:1200,messages:[{role:'system',content:systemPrompt},{role:'user',content:studentEvidence}]};
-  const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),35000);
-  let response:Response;
-  try{
-   response=await fetch(`${baseURL}/${endpoint}`,{
-    method:'POST',headers,signal:controller.signal,cache:'no-store',body:JSON.stringify(payload)
-   });
-  } finally {clearTimeout(timer);}
-  if(!response.ok){
-   let code='';let message='';
-   try{
-    const errorBody=await response.json();
-    code=String(errorBody?.error?.code||errorBody?.error?.type||errorBody?.code||'').slice(0,65);
-    message=String(errorBody?.error?.message||errorBody?.message||'').slice(0,180);
-   }catch{}
-   const safe=(value:string)=>value.replace(/sk-[a-zA-Z0-9_-]+/g,'[redacted]').replaceAll(String.fromCharCode(10),' ').replaceAll(String.fromCharCode(13),' ');
-   console.warn('[GEXP AI] Upstream status:',response.status,'code:',safe(code),'message:',safe(message));
-   if(response.status===503 && /no available accounts/i.test(message)){
-    throw new Error('AI provider has no available upstream accounts (HTTP 503)');
-   }
-   throw new Error(`AI provider returned HTTP ${response.status}${code?` (${safe(code)})`:''}`);
-  }
-  const data=await response.json();
-  const rawText=protocol==='anthropic'
-   ? (Array.isArray(data?.content)
-      ? data.content.filter((block:{type?:string;text?:string})=>block?.type==='text'&&typeof block.text==='string').map((block:{text:string})=>block.text).join(' ')
-      : '')
-   : String(data?.choices?.[0]?.message?.content||'');
+  const rawText=await requestProviderText({
+   apiKey,model,protocol,baseUrl:baseURL,systemPrompt,userInput:studentEvidence,
+  });
   const output=parseAiJson(rawText) as {selections?:{id?:number;reason?:string}[]};
   if(!Array.isArray(output?.selections) || output.selections.length<4)throw new Error('Invalid model selection format');
   const allowed=new Map(shortlist.map(s=>[s.university.id,s]));const selected:Recommendation[]=[];

@@ -2,7 +2,7 @@
 
 A polished Next.js web app for SUTD students to discover four viable GEXP choices, inspect historical credit-transfer references, and download filled versions of the **actual SUTD 2023 research-only PDF templates** supplied with the 2027 resource pack.
 
-**Status:** Deployed successfully to Vercel at **https://gexp27.vercel.app** (production Next.js build verified on 12 November 2026). The custom domain **gexp.tejaaswinv.site** is assigned in Vercel but its Namecheap-hosted DNS must point `gexp` (CNAME) to `6c4f24dd7c71996c.vercel-dns-017.com` before it is reachable. ZaoAPI is optional and is **not active until server-side credentials are configured**.
+**Status:** Deployed successfully to Vercel at **https://gexp27.vercel.app** (production Next.js build verified on 12 November 2026). The custom domain **gexp.tejaaswinv.site** is assigned in Vercel but its Namecheap-hosted DNS must point `gexp` (CNAME) to `6c4f24dd7c71996c.vercel-dns-017.com` before it is reachable. DeepSeek is configured server-side; verify the model with the live provider smoke test before declaring AI service healthy.
 
 ## Features
 
@@ -11,7 +11,7 @@ A polished Next.js web app for SUTD students to discover four viable GEXP choice
 - 69 official-reference host-university records, their threshold CGPAs, constraints, term slots and pillar guidance.
 - 6,644 **previously referenced** course-equivalency records; ranks courses for the student's tracks and interests.
 - Reviews exactly 4 different host universities from eligible candidates; server validates current term and threshold CGPA before shortlisting.
-- Optional ZaoAPI ranking (model only chooses among evidence-filtered candidates) with transparent rules-based fallback.
+- Optional DeepSeek V4 ranking over GPA-filtered candidates, with transparent rules-based fallback.
 - Inspect and remove mapping rows; propose new courses explicitly marked as **not previously mapped**.
 - One-click ZIP export: four completed 2-page SUTD study-plan PDFs, per-university CSV mapping tables, review checklist, and credit-transfer PDF for each manually proposed, non-reference course.
 - Source explorer and reference templates; no account, server database connection or credentials required to browse.
@@ -50,30 +50,34 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Open `http://localhost:3000`. Without ZaoAPI credentials, the shortlist remains functional using deterministic scoring; the UI clearly labels it **Rules-based analysis**.
+Open `http://localhost:3000`. Without AI credentials, the shortlist remains functional using deterministic scoring; the UI clearly labels it **Rules-based analysis**.
 
-## Connect an AI provider (Anthropic Messages or OpenAI-compatible)
+## Connect the Sub2API DeepSeek V4 provider (Responses API)
 
-The supplied Miaoqu AI configuration uses an Anthropic-compatible endpoint and model names. In Vercel **Project → Settings → Environment Variables**, configure:
+The GEXP website uses the same DeepSeek group and Miaoqu base URL as Codex CLI, but sends its own server-side request through the **Responses API**, not the Anthropic Messages endpoint.
+
+Vercel **gexp27 → Settings → Environment Variables → production**:
 
 ```env
-ZAO_API_KEY=your_server_side_secret
-ZAO_MODEL=claude-sonnet-5-5
-ZAO_API_PROTOCOL=anthropic
+ZAO_API_KEY=(existing server-side key; do not copy or expose)
+ZAO_MODEL=deepseek-v4-pro
+ZAO_API_PROTOCOL=responses
 ZAO_API_BASE_URL=https://api.miaoquai.com/v1
 ```
 
-The existing OpenAI-compatible integration remains supported with `ZAO_API_PROTOCOL=openai` and an appropriate HTTPS base URL.
+The existing production secret is reused. Optionally set `SUB2API_API_KEY`, `SUB2API_MODEL`, `SUB2API_WIRE_API`, and `SUB2API_BASE_URL` instead (these take precedence). The Codex config uses `env_key = "SUB2API_API_KEY"`; this is the **CLI** environment-variable name, not a required website key name. Keep credentials server-side only. Never set `NEXT_PUBLIC_` secrets.
 
-The backend uses `POST /v1/messages` for Anthropic format and `POST /v1/chat/completions` for OpenAI format. It validates the AI-selected IDs against the already GPA-filtered evidence shortlist, and returns a labelled rules-based shortlist if the model is unavailable. **Do not commit tokens** or prefix credentials with `NEXT_PUBLIC_`.
+The web backend sends `POST https://api.miaoquai.com/v1/responses` with `model: deepseek-v4-pro`, `instructions`, `input`, and JSON-output mode. It supports legacy `openai` and `anthropic` protocols if explicitly configured. Responses are stateless, and the application does not store AI response data or user names at the provider.
 
-Only academic inputs (CGPA, pillar, track preferences, interests, target term, region) are sent to the AI provider; name, student ID and passport are excluded. The live project has a Vercel Firewall limit of 12 `POST /api/analyze` requests per 10 minutes per IP, but provider billing limits and key rotation remain essential.
+The UI displays **DeepSeek AI reviewed** only when the upstream model actually selects four distinct, allowed universities. A labelled **Rules-based analysis** is shown on 503, timeout, malformed output, or unavailable credentials. Academic data only (CGPA, pillar, track preferences, interests, target term, region) is sent to the provider; names, student IDs, and passports are excluded. The evidence-filtered candidate list and historical mapping provenance always remain server-validated.
+
+Run `npm run test:provider` for mocked Responses API/adapter tests, and run the GitHub Actions `GEXP provider smoke test` after production deployment to verify a live AI response. A successful Next.js build **does not** prove model availability.
 
 ## Deploy
 
 1. Run `npm install && npm run build` on your own machine. Ensure all dependencies install and the UI behaves as expected.
 2. Push changes to the existing `tejaaswinv/gexp27` GitHub repository.
-3. The repository is already connected to the **gexp27** Vercel project; configure the three `ZAO_*` environment variables in the Vercel **server environment** to enable paid AI requests.
+3. The repository is connected to the **gexp27** Vercel project. Verify production `ZAO_*` variables (or `SUB2API_*` overrides) and redeploy to enable DeepSeek model calls.
 4. Deploy to Preview and test a profile, review all four recommendations, export the ZIP and open one PDF before sharing with friends.
 5. Check the SUTD resource-sharing terms before making the reference workbook publicly downloadable. Consider adding invite-based access before wide release.
 
