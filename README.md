@@ -61,6 +61,7 @@ Vercel **gexp27 → Settings → Environment Variables → production**:
 ```env
 ZAO_API_KEY=(existing server-side key; do not copy or expose)
 ZAO_MODEL=deepseek-v4-pro-ga-260813
+ZAO_FALLBACK_MODEL=deepseek-v4-1-flash-260910
 ZAO_API_PROTOCOL=responses
 ZAO_API_BASE_URL=https://api.miaoquai.com/v1
 ```
@@ -69,7 +70,7 @@ The existing production secret is reused. Optionally set `SUB2API_API_KEY`, `SUB
 
 The web backend sends `POST https://api.miaoquai.com/v1/responses` with `model: deepseek-v4-pro-ga-260813`, `instructions`, `input`, and JSON-output mode. It supports legacy `openai` and `anthropic` protocols if explicitly configured. Responses are stateless, and the application does not store AI response data or user names at the provider.
 
-The UI displays **DeepSeek AI reviewed** only when the upstream model actually selects four distinct, allowed universities. A labelled **Rules-based analysis** is shown on 503, timeout, malformed output, or unavailable credentials. Academic data only (CGPA, pillar, track preferences, interests, target term, region) is sent to the provider; names, student IDs, and passports are excluded. The evidence-filtered candidate list and historical mapping provenance always remain server-validated.
+The backend first tries Pro with a 15-second cap, then the listed V4.1 Flash fallback (13 seconds) if Pro stalls or fails. The response reports which model actually answered. The UI displays **DeepSeek AI reviewed** only when an upstream model actually selects four distinct, allowed universities. A labelled **Rules-based analysis** is shown on 503, timeout, malformed output, or unavailable credentials. Academic data only (CGPA, pillar, track preferences, interests, target term, region) is sent to the provider; names, student IDs, and passports are excluded. The evidence-filtered candidate list and historical mapping provenance always remain server-validated.
 
 Run `npm run test:provider` for mocked Responses API/adapter tests, and run the GitHub Actions `GEXP provider smoke test` after production deployment to verify a live AI response. A successful Next.js build **does not** prove model availability.
 
