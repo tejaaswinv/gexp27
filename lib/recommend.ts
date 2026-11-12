@@ -14,6 +14,31 @@ const trackWords:Record<string,string[]> = {
  'Sustainability':['environment','renewable','climate','sustainable','energy'],
  'Finance':['finance','quantitative','economic','accounting','fintech'],
  'Electrical Engineering':['electrical','circuit','embedded','signal','power','electronic'],
+ 'Security':['security','secure','cryptograph','privacy','network security','cyber','forensic','authentication'],
+ 'IoT and Intelligent Systems':['embedded','iot','network','sensor','cloud','distributed','real-time','robot'],
+ 'Data Analytics':['analytics','statistics','machine learning','mining','data','optimisation'],
+ 'Financial Technology':['finance','financial','risk','fintech','bank','market'],
+ 'Visual Analytics and Computing':['visual','computer vision','graphics','visualisation','image','rendering'],
+ 'Custom Track':['design','interdisciplinary','innovation'],
+ 'Beyond Industry 4.0':['manufactur','automation','digital twin','industry','3d printing'],
+ 'Computer Engineering':['computer engineering','microcontroller','embedded','digital circuit','hardware'],
+ 'Healthcare Engineering Design':['biomedical','health','medical','clinical','device'],
+ 'Mechanical Engineering':['mechanical','fluid','mechanics','energy','materials'],
+ 'Self-Directed Programme':['engineering','product','design'],
+ 'Aviation Systems':['aviation','airport','flight','air traffic','transport'],
+ 'Business Analytics and Operations Research':['optimisation','operations','decision','analytics','statistics','data'],
+ 'Financial Services':['financial','bank','risk','market','finance'],
+ 'Supply Chain & Logistics':['supply chain','logistics','transport','operations','distribution'],
+ 'Design Computation':['design','computational','fabrication','geometry','parametric'],
+ 'Building Technology':['structur','building','materials','energy','construction'],
+ 'History, Theory and Culture':['architecture','history','culture','design','urban'],
+ 'Urban and Sustainable Design':['urban','sustainable','city','transport','energy','environment'],
+ 'Spatial AI & Creative Computation':['creative','machine learning','spatial','architecture','computer vision'],
+ 'Healthcare Design':['health','medical','biomedical','clinical','human','device'],
+ 'Enterprise Design':['business','innovation','manufactur','entrepreneurship','product','operations'],
+ 'Societal and Systems Intelligence':['economics','finance','business','social','system','analytics','human'],
+ 'Human-Centred Intelligence':['human','psychology','behaviour','ethics','interaction','cognitive'],
+
 };
 const regionMap:Record<string,string[]>={
  'Europe':['Austria','Belgium','Czech Republic','Denmark','Finland','France','Germany','Greece','Iceland','Netherlands','Norway','Portugal','Spain','Sweden','Switzerland','United Kingdom'],
@@ -42,13 +67,16 @@ function courseScore(course:Course,profile:StudentProfile):number{
  let score=0;
  for(const track of profile.tracks){ for(const word of trackWords[track]||[normal(track)]) if(title.includes(word))score+=word.length>6?3.5:1.5; }
  if(profile.secondMajorHdi && /(human|interaction|design|user experience|interface)/.test(title))score+=1.5;
+ if(profile.secondMajorHdi&&profile.hdiDomain==='Healthcare'&&/(health|medical|biomedical|clinical|patient)/.test(title))score+=3;
+ if(profile.secondMajorHdi&&profile.hdiDomain==='Manufacturing'&&/(manufactur|industry|operations|enterprise|production)/.test(title))score+=3;
  const interestWords=normal(profile.interests).split(/[^a-z\d]+/).filter(s=>s.length>3).slice(0,24);
  score+=interestWords.filter(w=>title.includes(w)).length*3;
  if(course.level==='Bachelor')score+=0.3;
  return score;
 }
 function pickMappings(uni:University,profile:StudentProfile):{mappings:Course[],pillarCount:number,hassCount:number,referenceCount:number,topRelevance:number} {
- const list=coursesFor(uni.name).filter(c=>termApplies(c,profile.term));
+ const plannedCodes=new Set(Object.values(profile.homePlan).flat().map(c=>c.code.trim().toLowerCase()).filter(Boolean));
+ const list=coursesFor(uni.name).filter(c=>termApplies(c,profile.term) && !plannedCodes.has((c.sutdCode||'').toLowerCase()));
  const dedupe=(xs:Course[], max:number)=>{
   const seenSutd=new Set<string>(),seenHost=new Set<string>();const out:Course[]=[];
   for(const c of xs.sort((a,b)=>courseScore(b,profile)-courseScore(a,profile))){
@@ -116,7 +144,7 @@ function parseAiJson(text:string):unknown{
 export async function generateAnalysis(profile:StudentProfile):Promise<Analysis>{
  const candidates=assembleCandidates(profile);
  const base=candidates.slice(0,4).map(c=>({...c}));
- const notices=['The 2027 reference list records historical in-principle mappings, not current course offerings or approvals.','Check passport restrictions, prerequisites, schedules, actual host enrolment and track/HDI requirements with SUTD.','Generated forms are planning aids; official approval and submission happen in the SUTD Admission Portal.'];
+ const notices=['Courses you already placed in Terms 4, 5, 7, or 8 are excluded from proposed exchange transfer mappings.', 'The 2027 reference list records historical in-principle mappings, not current course offerings or approvals.','Check passport restrictions, prerequisites, schedules, actual host enrolment and track/HDI requirements with SUTD.','Generated forms are planning aids; official approval and submission happen in the SUTD Admission Portal.'];
  const apiKey=process.env.SUB2API_API_KEY || process.env.ZAO_API_KEY;
  const model=process.env.SUB2API_MODEL || process.env.ZAO_MODEL || 'deepseek-v4-pro-ga-260813';
  if(!apiKey || !model){
@@ -139,7 +167,7 @@ export async function generateAnalysis(profile:StudentProfile):Promise<Analysis>
   const protocol: ProviderProtocol=rawProtocol==='anthropic'?'anthropic':rawProtocol==='openai'?'openai':'responses';
   const baseURL=process.env.SUB2API_BASE_URL || process.env.ZAO_API_BASE_URL || 'https://api.miaoquai.com/v1';
   const systemPrompt='You are an evidence-constrained SUTD GEXP 2027 academic planning adviser. Recommend exactly four DIFFERENT university IDs solely from the provided shortlist and facts. Do not fabricate course codes, actual offerings, track compliance, admission likelihood, ranking numbers or approval. Keep every reason to <= 45 words, noting evidence gaps. Return ONLY JSON of form {"selections":[{"id":INTEGER,"reason":"..."}]}. Do not treat referenced mappings as currently offered or approved.';
-  const studentEvidence=JSON.stringify({student:{pillar:profile.pillar,gpa:profile.gpa,tracks:profile.tracks,hdi:profile.secondMajorHdi,interests:profile.interests,region:profile.region,term:profile.term},shortlist:evidence});
+  const studentEvidence=JSON.stringify({student:{pillar:profile.pillar,gpa:profile.gpa,matriculationYear:profile.matriculationYear??2025,tracks:profile.tracks,hdi:profile.secondMajorHdi,hdiDomain:profile.hdiDomain||'',interests:profile.interests,region:profile.region,term:profile.term,plannedSutdCodes:Object.values(profile.homePlan).flat().map(c=>c.code).filter(Boolean).slice(0,18)},shortlist:evidence});
   const generated=await requestWithModelFallback({
    apiKey,model,protocol,baseUrl:baseURL,systemPrompt,userInput:studentEvidence,
    fallbackModel: process.env.ZAO_FALLBACK_MODEL || 'deepseek-v4-1-flash-260910',
