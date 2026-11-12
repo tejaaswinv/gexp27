@@ -317,3 +317,11 @@
 @media(prefers-reduced-motion:reduce){
  .degree-page *{scroll-behavior:auto!important;transition:none!important;animation:none!important}
 }
+
+.degree-nonstandard-warning{
+ display:flex;gap:10px;align-items:flex-start;
+ padding:14px 15px;margin:-17px 0 26px;
+ background:#fff1e2;border:1px solid #e9cfb5;border-radius:12px;
+ font-size:11px;color:#95694e;line-height:1.65;
+}
+.degree-nonstandard-warning svg{flex-shrink:0;margin-top:1px}
