@@ -124,13 +124,13 @@ export async function generateAnalysis(profile:StudentProfile):Promise<Analysis>
   return {recommendations:base,mode:'rules-based',notices,generatedAt:new Date().toISOString(),candidateCount:candidates.length};
  }
  try{
-  const shortlist=candidates.slice(0,Math.max(12,Math.min(candidates.length,16)));
+  const shortlist=candidates.slice(0,Math.max(8,Math.min(candidates.length,10)));
   const evidence=shortlist.map(c=>({
    id:c.university.id,name:c.university.name,country:c.university.country,city:c.university.city,
    minGpa:c.university.minimumGpa,score:c.score,pillar:c.university.pillarRecommendations[profile.pillar]?.[profile.term],
    pillarMapped:c.pillarCount,hassMapped:c.hassCount,
-   relevantCourses:c.mappings.slice(0,6).map(m=>`${m.hostCode}: ${m.hostTitle} => ${m.sutdCode}: ${m.sutdTitle}`),
-   warnings:c.warnings.slice(0,3),tags:c.university.tags||[]
+   relevantCourses:c.mappings.slice(0,3).map(m=>`${m.hostCode}: ${m.hostTitle} => ${m.sutdCode}: ${m.sutdTitle}`),
+   warnings:c.warnings.slice(0,2),tags:c.university.tags||[]
   }));
   // Codex/Sub2API DeepSeek uses wire_api=responses (POST /v1/responses).
   // Accept the existing production ZAO_* settings so credentials never need
