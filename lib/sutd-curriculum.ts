@@ -5,10 +5,11 @@ import type { Pillar } from './types';
  * For electives without a published term, candidates are shown with a clear check-offering warning.
  * This is NOT a registration timetable or credit-transfer approval database.
  */
-export type CatalogueCategory='core'|'elective'|'hass'|'hdi-studio'|'hdi-ai'|'capstone';
+export type CatalogueCategory='core'|'elective'|'hass'|'hdi-studio'|'hdi-ai'|'hdi-domain'|'hdi-domain-hass'|'capstone';
 export type CurriculumCourse={
  code:string; title:string; pillar:Pillar|'ALL'; category:CatalogueCategory;
  terms:number[]; source:string; tracks?:string[]; cohort?:'2025-earlier'|'2026-onwards';
+ domain?:'Healthcare'|'Manufacturing';
 };
 export type TrackChoice={name:string;note:string;tags:string[]};
 
@@ -91,6 +92,7 @@ const elective=(pillar:Pillar,code:string,title:string,terms:number[]=[],tracks:
 const ai=(pillar:Pillar,code:string,title:string,terms:number[]=[],tracks:string[]=[]):CurriculumCourse=>({pillar,terms,code,title,category:'hdi-ai',source:hdiCurriculumUrl,tracks});
 const studio=(code:string,title:string,terms:number[]=[]):CurriculumCourse=>({pillar:'ALL',terms,code,title,category:'hdi-studio',source:hdiCurriculumUrl});
 const hass=(code:string,title:string):CurriculumCourse=>({pillar:'ALL',terms:[],code,title,category:'hass',source:hdiCurriculumUrl});
+const domainCourse=(code:string,title:string,domain:'Healthcare'|'Manufacturing',category:'hdi-domain'|'hdi-domain-hass'='hdi-domain'):CurriculumCourse=>({pillar:'ALL',terms:[],code,title,category,domain,source:hdiCurriculumUrl});
 
 export const curriculumCourses:CurriculumCourse[]=[
  // CSD mandatory curriculum and elective offerings
@@ -194,6 +196,26 @@ export const curriculumCourses:CurriculumCourse[]=[
  core('ASD',8,'01.401','Capstone 2'),
  core('DAI',7,'01.400','Capstone 1'),
  core('DAI',8,'01.401','Capstone 2'),
+ // DAI HDI pathway: select courses from the chosen domain, plus one domain HASS.
+ // Exact terms/eligibility vary. These are candidates, not a timetable.
+ domainCourse('01.101','Technologies for Sustainable Global Health','Healthcare'),
+ domainCourse('01.114','Instructional Design of Serious Games','Healthcare'),
+ domainCourse('01.116','AI for Healthcare','Healthcare'),
+ domainCourse('30.203','Topics in Biomedical and Healthcare Engineering','Healthcare'),
+ domainCourse('02.165TS','Empathy: An interdisciplinary concept','Healthcare','hdi-domain-hass'),
+ domainCourse('02.216TS','Human Behaviour, Technology and Design','Healthcare','hdi-domain-hass'),
+ domainCourse('02.217','Gender, Sexuality and Society','Healthcare','hdi-domain-hass'),
+ domainCourse('02.230TS','Health Communication and Behaviour Change','Healthcare','hdi-domain-hass'),
+ domainCourse('30.111','Entrepreneurship','Manufacturing'),
+ domainCourse('30.120','Design and Manufacturing','Manufacturing'),
+ domainCourse('30.303','Industry 4.0 & 3D Printing','Manufacturing'),
+ domainCourse('40.230','Design for Sustainability','Manufacturing'),
+ domainCourse('40.250','Quality Analytics and Management','Manufacturing'),
+ domainCourse('02.104TS','History of International Development in Asia: The Role of Engineers and Designers','Manufacturing','hdi-domain-hass'),
+ domainCourse('02.140TS','Shaping Futures: Innovation, Work and Society','Manufacturing','hdi-domain-hass'),
+ domainCourse('02.147TS','Interventions in Design, Technology and Society','Manufacturing','hdi-domain-hass'),
+ domainCourse('02.174TS','The Design of Digital Platforms','Manufacturing','hdi-domain-hass'),
+ domainCourse('02.202','Organisational Processes','Manufacturing','hdi-domain-hass'),
  // HDI: official curriculum lists permitted studio + AI and HASS course catalogues,
  // but does NOT guarantee a particular term. For non-DAI majors, show as optional.
  studio('60.003','Product Design Studio'),
@@ -255,8 +277,9 @@ export function getTermDescription(pillar:Pillar,term:number,year:number){
 export function coreCoursesFor(pillar:Pillar,term:number,year:number):CurriculumCourse[]{
  return curriculumCourses.filter(c=>c.pillar===pillar&&c.category==='core'&&c.terms.includes(term)&&(!c.cohort||(c.cohort==='2026-onwards'?year>=2026:year<2026)));
 }
-export function courseOptionsFor(pillar:Pillar,term:number,year:number,tracks:string[],hdi:boolean):CurriculumCourse[]{
+export function courseOptionsFor(pillar:Pillar,term:number,year:number,tracks:string[],hdi:boolean,domain:string=''):CurriculumCourse[]{
  const main=curriculumCourses.filter(c=>{
+  if(c.category==='hdi-domain'||c.category==='hdi-domain-hass')return hdi&&pillar==='DAI'&&Boolean(domain)&&c.domain===domain&&term>=5;
   if(c.category==='hass')return c.terms.length===0||c.terms.includes(term);
   if(c.category==='hdi-studio')return hdi&&pillar!=='DAI'&&term>=7;
   if(c.category==='hdi-ai'){
@@ -284,6 +307,8 @@ export function courseOptionsFor(pillar:Pillar,term:number,year:number,tracks:st
 export function termCourseLabel(c:CurriculumCourse,term:number):string {
  if(c.category==='core')return 'Curriculum core';
  if(c.terms.includes(term))return 'Listed for this term';
+ if(c.category==='hdi-domain')return 'HDI domain subject — check term';
+ if(c.category==='hdi-domain-hass')return 'HDI domain HASS — check term';
  if(c.category==='hass')return 'HASS / HDI-HCD — check timetable';
  if(c.category==='hdi-ai'||c.category==='hdi-studio')return 'HDI candidate — check requirements/term';
  return 'Elective — check term/prerequisites';
