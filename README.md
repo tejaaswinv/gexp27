@@ -7,7 +7,10 @@ A polished Next.js web app for SUTD students to discover four viable GEXP choice
 ## Features
 
 - Friendly, mobile-responsive onboarding: name, optional student ID, CGPA (/5), pillar, Fall 2027 or Spring 2028, tracks, interests, region, citizenship and HDI second major.
-- Optional SUTD Terms 4/5/7/8 roadmap (auto-filled into PDF).
+- SUTD curriculum-aware Terms 4/5/7/8 roadmap: AY2023–AY2026 intake selector, one-click required-core suggestions, selectable term-specific course catalogue, editable code/title rows, and manual additions. Selections are included in generated PDF study plans.
+- Official CSD, EPD, ESD and cohort-specific DAI track choices; ASD interest areas are expressly **not** official declared tracks. Selected track descriptions display on mobile.
+- HDI (Human-centred Domain Intelligence) second-major pathway guidance, including studio/AI/HASS requirements for CSD/EPD/ESD/ASD and domain-course/HASS requirements for DAI.
+
 - 69 official-reference host-university records, their threshold CGPAs, constraints, term slots and pillar guidance.
 - 6,644 **previously referenced** course-equivalency records; ranks courses for the student's tracks and interests.
 - Reviews exactly 4 different host universities from eligible candidates; server validates current term and threshold CGPA before shortlisting.
@@ -15,6 +18,25 @@ A polished Next.js web app for SUTD students to discover four viable GEXP choice
 - Inspect and remove mapping rows; propose new courses explicitly marked as **not previously mapped**.
 - One-click ZIP export: four completed 2-page SUTD study-plan PDFs, per-university CSV mapping tables, review checklist, and credit-transfer PDF for each manually proposed, non-reference course.
 - Source explorer and reference templates; no account, server database connection or credentials required to browse.
+
+## Official SUTD curriculum sources (reviewed November 2026)
+
+The SUTD course picker is implemented in `lib/sutd-curriculum.ts`, separate from the GEXP host/mapping database. It is a **curated planning reference**, not a live enrolment/Timetable API. Source pages:
+
+| Primary pillar | Source |
+| --- | --- |
+| CSD (ISTD) | https://www.sutd.edu.sg/istd/education/undergraduate/curriculum/ |
+| EPD | https://www.sutd.edu.sg/epd/education/undergraduate/curriculum/ |
+| ESD | https://www.sutd.edu.sg/esd/education/undergraduate/curriculum/beyond-ay-2019/ |
+| ASD | https://www.sutd.edu.sg/asd/education/undergraduate/curriculum/ |
+| DAI | https://www.sutd.edu.sg/dai/education/undergraduate/curriculum/ |
+| HDI second major | https://www.sutd.edu.sg/education/undergraduate/human-centred-domain-intelligence-second-major/curriculum/ |
+
+Official track pages: CSD https://www.sutd.edu.sg/istd/education/undergraduate/specialisation-tracks/overview/ ; EPD https://www.sutd.edu.sg/epd/education/undergraduate/curriculum/ ; ESD https://www.sutd.edu.sg/esd/education/undergraduate/specialisation-tracks/overview/ ; DAI 2025 https://www.sutd.edu.sg/dai/education/undergraduate/specialisation-tracks/ ; DAI 2026+ https://www.sutd.edu.sg/dai/education/undergraduate/supercharged-tracks/ .
+
+**Important limitations:** Only published core-course term assignments and specific course catalogue terms are represented as term-verified references. Other technical electives, HASS subjects and HDI courses may be shown as planning candidates with a *check actual term* label. Course schedules, prerequisites, registration capacity, cross-pillar eligibility, graduation requirements and second-major acceptance must be checked directly with SUTD. DAI changed its specialisation structure from AY2026; the cohort selector is essential. Students can add or edit any course manually if the SUTD list changes.
+
+When preparing exchange equivalencies, the recommender excludes SUTD courses already assigned to non-exchange Terms 4, 5, 7 or 8, avoiding double planning. The original resource workbook still governs historical course mapping; no mapping is marked as definitively approved.
 
 ## Data provenance and boundaries
 
