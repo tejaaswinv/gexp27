@@ -27,8 +27,8 @@ jobs:
                  -o /tmp/result-get -w 'status=%{http_code} duration=%{time_total}s size=%{size_download} bytes content-type=%{content_type}\n' \
                  "https://$host$path" || failures=$((failures+1))
               if [ "$path" = /study-planner ]; then
-                if ! grep -qi "Eight terms" /tmp/result-get; then
-                  echo "Study planner route did not render expected content"
+                if ! grep -Eqi "Eight terms|THE EIGHT-TERM PLANNER" /tmp/result-get; then
+                  echo "Study planner route missing eight-term heading (unexpected SSR response)"
                   failures=$((failures+1))
                 fi
               fi
