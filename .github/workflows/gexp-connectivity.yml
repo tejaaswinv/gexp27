@@ -21,11 +21,17 @@ jobs:
           failures=0
           for host in gexp.tejaaswinv.site gexp27.vercel.app; do
             echo "::group::Host: $host"
-            for path in / /api/catalog; do
+            for path in / /study-planner /api/catalog; do
               echo "Checking https://$host$path"
               curl --silent --show-error --location --max-time 20 --retry 1 \
                  -o /tmp/result-get -w 'status=%{http_code} duration=%{time_total}s size=%{size_download} bytes content-type=%{content_type}\n' \
                  "https://$host$path" || failures=$((failures+1))
+              if [ "$path" = /study-planner ]; then
+                if ! grep -qi "Eight terms" /tmp/result-get; then
+                  echo "Study planner route did not render expected content"
+                  failures=$((failures+1))
+                fi
+              fi
               if [ "$path" = /api/catalog ]; then
                 node -e "try{const p=JSON.parse(require('fs').readFileSync('/tmp/result-get','utf8'));console.log('catalog university count',p.universities?.length??'none')}catch(e){console.log('non-JSON catalog response')}" || true
               fi
