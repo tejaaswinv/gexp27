@@ -205,7 +205,7 @@ export const curriculumCourses:CurriculumCourse[]=[
  core('DAI',8,'01.401','Capstone 2'),
  // DAI HDI pathway: select courses from the chosen domain, plus one domain HASS.
  // Exact terms/eligibility vary. These are candidates, not a timetable.
- domainCourse('01.101','Technologies for Sustainable Global Health','Healthcare'),
+ {pillar:'ALL',terms:[7],code:'01.101',title:'Technologies for Sustainable Global Health',category:'hdi-domain',domain:'Healthcare',source:hdiCurriculumUrl},
  domainCourse('01.114','Instructional Design of Serious Games','Healthcare'),
  domainCourse('01.116','AI for Healthcare','Healthcare'),
  domainCourse('30.203','Topics in Biomedical and Healthcare Engineering','Healthcare'),
@@ -225,11 +225,11 @@ export const curriculumCourses:CurriculumCourse[]=[
  domainCourse('02.202','Organisational Processes','Manufacturing','hdi-domain-hass'),
  // HDI: official curriculum lists permitted studio + AI and HASS course catalogues,
  // but does NOT guarantee a particular term. For non-DAI majors, show as optional.
- studio('60.003','Product Design Studio'),
- studio('60.004','Service Design Studio'),
- studio('60.006','Spatial Design Studio'),
- studio('60.008','Systems Design Studio'),
- studio('50.057','Modern Software Design Studio with Agentic AI'),
+ studio('60.003','Product Design Studio',[4]),
+ studio('60.004','Service Design Studio',[5]),
+ studio('60.006','Spatial Design Studio',[7]),
+ studio('60.008','Systems Design Studio',[6]),
+ studio('50.057','Modern Software Design Studio with Agentic AI',[7]),
  ai('CSD','50.007','Machine Learning',[],['Artificial Intelligence']),
  ai('CSD','50.021','Artificial Intelligence',[],['Artificial Intelligence']),
  ai('CSD','50.035','Computer Vision',[],['Artificial Intelligence']),
@@ -286,9 +286,9 @@ export function coreCoursesFor(pillar:Pillar,term:number,year:number):Curriculum
 }
 export function courseOptionsFor(pillar:Pillar,term:number,year:number,tracks:string[],hdi:boolean,domain:string=''):CurriculumCourse[]{
  const main=curriculumCourses.filter(c=>{
-  if(c.category==='hdi-domain'||c.category==='hdi-domain-hass')return hdi&&pillar==='DAI'&&Boolean(domain)&&c.domain===domain&&term>=5;
+  if(c.category==='hdi-domain'||c.category==='hdi-domain-hass')return hdi&&pillar==='DAI'&&Boolean(domain)&&c.domain===domain&&term>=5&&(c.terms.length===0||c.terms.includes(term));
   if(c.category==='hass')return c.terms.length===0||c.terms.includes(term);
-  if(c.category==='hdi-studio')return hdi&&pillar!=='DAI'&&term>=7;
+  if(c.category==='hdi-studio')return hdi&&pillar!=='DAI'&&(c.terms.length===0||c.terms.includes(term));
   if(c.category==='hdi-ai'){
    const knownTerm=curriculumCourses.find(other=>other.pillar===c.pillar&&other.code===c.code&&other.category!=='hdi-ai'&&other.category!=='hdi-studio'&&other.terms.length>0);
    return hdi&&(c.pillar===pillar||term>=7)
@@ -304,7 +304,7 @@ export function courseOptionsFor(pillar:Pillar,term:number,year:number,tracks:st
  const unique=new Map<string,CurriculumCourse>();
  for(const item of main){
   const current=unique.get(item.code);
-  if(!current||item.category==='core'||(item.terms.includes(term)&&!current.terms.includes(term)))unique.set(item.code,item);
+  if(!current||item.category==='core'||(hdi&&item.category==='hdi-studio'&&current.category==='elective')||(item.terms.includes(term)&&!current.terms.includes(term)))unique.set(item.code,item);
  }
  return [...unique.values()].sort((a,b)=>{
   const rank=(c:CurriculumCourse)=>c.category==='core'?0:c.tracks?.some(t=>tracks.includes(t))?1:c.terms.includes(term)?2:c.category==='hass'?3:c.category.startsWith('hdi')?4:5;
@@ -317,6 +317,7 @@ export function termCourseLabel(c:CurriculumCourse,term:number):string {
  if(c.category==='hdi-domain')return 'HDI domain subject — check term';
  if(c.category==='hdi-domain-hass')return 'HDI domain HASS — check term';
  if(c.category==='hass')return 'HASS / HDI-HCD — check timetable';
- if(c.category==='hdi-ai'||c.category==='hdi-studio')return 'HDI candidate — check requirements/term';
+ if(c.category==='hdi-studio')return 'HDI studio — check cross-pillar enrolment';
+ if(c.category==='hdi-ai')return 'HDI AI candidate — confirm requirements';
  return 'Elective — check term/prerequisites';
 }
