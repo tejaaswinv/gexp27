@@ -504,3 +504,132 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
   .hero-start{transition:none}
   .hero-start:hover{transform:none}
 }
+
+
+/* SUTD curriculum-aware planner — editorial controls, not generic text fields. */
+.track-guidance {
+  margin:13px 0 0;padding:13px 15px;
+  border-radius:12px;border:1px solid #d7dfcd;background:#f3f5ed;
+  color:#687c68;font-size:12px;line-height:1.65;
+}
+.track-guidance a,.hdi-guidance a,.roadmap-context a,.roadmap-hdi a,.roadmap-disclaimer a{
+  display:inline-flex;align-items:center;gap:5px;
+  font-weight:800;color:#396448;text-decoration:underline;
+  text-underline-offset:3px;text-decoration-thickness:1px;
+}
+.hdi-guidance{
+  display:flex;flex-direction:column;gap:7px;
+  margin-top:12px;padding:19px;
+  background:#f4f0e6;border:1px solid #e3dac5;border-radius:14px;
+}
+.hdi-guidance strong,.roadmap-hdi strong{color:#36543e;font-size:13px}
+.hdi-guidance p,.roadmap-hdi p{margin:0;color:#697e69;font-size:12px;line-height:1.8}
+.hdi-guidance .field{margin-top:8px;max-width:340px}
+.hdi-guidance small{font-size:10px;line-height:1.6;color:#837f6a}
+.term-plan>.info-line{margin-bottom:18px}
+.roadmap-context{
+  display:flex;align-items:center;justify-content:space-between;gap:20px;
+  margin:0 0 20px;padding:15px 18px;
+  border:1px solid #d9dfce;border-radius:13px;
+  background:#eef1e5;
+}
+.roadmap-context>div{display:flex;flex-direction:column;gap:5px;min-width:0}
+.roadmap-context strong{font-size:15px;color:#30503b;letter-spacing:-.02em}
+.roadmap-context span{font-size:11px;color:#728674;overflow-wrap:anywhere}
+.roadmap-context a{font-size:11px;white-space:nowrap}
+.roadmap-hdi{
+  display:flex;gap:12px;align-items:flex-start;
+  margin:0 0 20px;padding:17px;
+  background:#f7f1e5;border:1px solid #e3dac7;border-radius:14px;
+}
+.roadmap-hdi>svg{color:#a27e52;flex-shrink:0}
+.roadmap-hdi p{margin:6px 0}
+.roadmap-hdi a{font-size:11px}
+.term-grid{gap:17px;align-items:stretch}
+.term-card{
+  display:flex;flex-direction:column;
+  padding:22px 20px;
+  border:1px solid #d9dfcf;border-radius:17px;
+  background:#fffdf7;
+  box-shadow:0 5px 0 #eae7da;
+  min-width:0;
+}
+.term-head{margin-bottom:9px;gap:14px}
+.term-head b{color:#2d4c38;font-size:18px;letter-spacing:-.035em}
+.term-head span{font-size:10px;color:#79917a;white-space:nowrap}
+.term-context{font-size:11px;line-height:1.6;color:#7a8979;margin:0 0 15px}
+.term-add-core{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  align-self:flex-start;min-height:37px;
+  padding:8px 11px;
+  border-radius:9px;border:1px solid #cddfc5;
+  background:#e9f0e4;color:#396849;
+  font-size:11px;font-weight:800;
+  transition:background .2s,border .2s;
+}
+.term-add-core:hover{background:#dcead5;border-color:#a6c49e}
+.term-add-core:disabled{opacity:.5}
+.course-picker{display:flex;flex-direction:column;gap:8px;margin:15px 0 14px}
+.course-picker>span{
+  display:flex;align-items:center;gap:7px;
+  font-size:11px;color:#526f59;font-weight:800;
+}
+.course-picker>span svg{color:#a37b51}
+.course-picker select{
+  width:100%;min-height:47px;padding:10px 30px 10px 13px;
+  border:1px solid #d3dccb;background:#fbfbf7;color:#32503d;
+  border-radius:11px;outline:none;
+  font-size:12px;font-weight:650;
+  text-overflow:ellipsis;white-space:nowrap;
+}
+.course-picker select:focus-visible{outline:3px solid #a1b596;outline-offset:2px}
+.course-picker select:disabled{opacity:.5}
+.term-course-list{display:flex;flex-direction:column;gap:8px}
+.term-empty{
+  margin:0;padding:10px;
+  border:1px dashed #d5dccc;border-radius:9px;
+  color:#91a08b;font-size:10px;line-height:1.7;
+}
+.term-row{margin:0;gap:7px;align-items:center;min-width:0}
+.term-row input{min-width:0;height:41px;font-size:12px;border-radius:9px;padding:0 10px;line-height:1.3}
+.term-row input:first-child{width:96px;flex:0 0 96px}
+.term-row input:nth-child(2){flex:1}
+.term-row .term-remove{
+  flex:0 0 29px;display:flex;justify-content:center;align-items:center;
+  width:29px;min-height:37px;border-radius:8px;color:#8d9a88;
+}
+.term-row .term-remove:hover{color:#ae5d4f;background:#f8edeb}
+.term-card-foot{
+  display:flex;justify-content:space-between;align-items:center;gap:14px;
+  border-top:1px solid #ecebe0;padding-top:13px;margin-top:auto;
+}
+.term-card-foot small{font-size:10px;color:#849583;white-space:nowrap}
+.term-add{font-size:11px;color:#4e805b;padding:5px 0}
+.term-add:hover{color:#275b37}
+.roadmap-disclaimer{
+  margin:22px 0 0;display:flex;align-items:flex-start;flex-wrap:wrap;gap:7px;
+  font-size:11px;line-height:1.75;color:#7c8b77;
+}
+.roadmap-disclaimer>svg{margin-top:2px;color:#73916d}
+@media(max-width:1000px){
+ .roadmap-context{align-items:flex-start;flex-direction:column}
+ .term-grid{grid-template-columns:1fr 1fr;gap:14px}
+ .term-card{padding:18px 16px}
+ .term-row input:first-child{width:80px;flex-basis:80px}
+}
+@media(max-width:760px){
+ .term-grid{grid-template-columns:1fr}
+ .term-card{padding:19px}
+ .term-row input:first-child{flex-basis:92px}
+ .course-picker select{font-size:16px}
+}
+@media(max-width:550px){
+ .roadmap-context{padding:15px;gap:12px}
+ .term-card{padding:17px}
+ .term-head b{font-size:17px}
+ .term-row input:first-child{flex-basis:79px}
+ .term-row input{height:44px;font-size:13px}
+ .course-picker>span{font-size:11px}
+ .roadmap-hdi{padding:14px}
+ .hdi-guidance{padding:15px}
+}
