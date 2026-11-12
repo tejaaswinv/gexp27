@@ -30,7 +30,7 @@ assert.equal(extractModelText({ content: [{ type: "text", text: valid }] }, "ant
 (async () => {
   let requests = 0;
   const cfg = {
-    apiKey: "dummy-test-key", model: "deepseek-v4-pro", protocol: "responses",
+    apiKey: "dummy-test-key", model: "deepseek-v4-pro-ga-260813", protocol: "responses",
     baseUrl: "https://api.miaoquai.com/v1",
     systemPrompt: "Return JSON with four university IDs.",
     userInput: '{"student":{"gpa":3.56,"pillar":"CSD"}}',
@@ -43,7 +43,7 @@ assert.equal(extractModelText({ content: [{ type: "text", text: valid }] }, "ant
       assert.equal(options.method, "POST");
       assert.equal(options.headers.Authorization, "Bearer dummy-test-key");
       const body = JSON.parse(options.body);
-      assert.equal(body.model, "deepseek-v4-pro");
+      assert.equal(body.model, "deepseek-v4-pro-ga-260813");
       assert.equal(body.input, cfg.userInput);
       assert.equal(body.instructions, cfg.systemPrompt);
       assert.equal(body.text.format.type, "json_object");

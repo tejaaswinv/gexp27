@@ -118,7 +118,7 @@ export async function generateAnalysis(profile:StudentProfile):Promise<Analysis>
  const base=candidates.slice(0,4).map(c=>({...c}));
  const notices=['The 2027 reference list records historical in-principle mappings, not current course offerings or approvals.','Check passport restrictions, prerequisites, schedules, actual host enrolment and track/HDI requirements with SUTD.','Generated forms are planning aids; official approval and submission happen in the SUTD Admission Portal.'];
  const apiKey=process.env.SUB2API_API_KEY || process.env.ZAO_API_KEY;
- const model=process.env.SUB2API_MODEL || process.env.ZAO_MODEL || 'deepseek-v4-pro';
+ const model=process.env.SUB2API_MODEL || process.env.ZAO_MODEL || 'deepseek-v4-pro-ga-260813';
  if(!apiKey || !model){
   notices.unshift('AI provider key is not configured: showing a transparent rules-based shortlist.');
   return {recommendations:base,mode:'rules-based',notices,generatedAt:new Date().toISOString(),candidateCount:candidates.length};

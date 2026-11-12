@@ -54,20 +54,20 @@ Open `http://localhost:3000`. Without AI credentials, the shortlist remains func
 
 ## Connect the Sub2API DeepSeek V4 provider (Responses API)
 
-The GEXP website uses the same DeepSeek group and Miaoqu base URL as Codex CLI, but sends its own server-side request through the **Responses API**, not the Anthropic Messages endpoint.
+The GEXP website uses the same DeepSeek group and Miaoqu base URL as Codex CLI, but sends its own server-side request through the **Responses API**, not the Anthropic Messages endpoint. The Codex alias `deepseek-v4-pro` returned `404 model_not_found` through this Sub2API integration; use the model ID shown in the Miaoqu group's catalog, `deepseek-v4-pro-ga-260813`, for the website.
 
 Vercel **gexp27 → Settings → Environment Variables → production**:
 
 ```env
 ZAO_API_KEY=(existing server-side key; do not copy or expose)
-ZAO_MODEL=deepseek-v4-pro
+ZAO_MODEL=deepseek-v4-pro-ga-260813
 ZAO_API_PROTOCOL=responses
 ZAO_API_BASE_URL=https://api.miaoquai.com/v1
 ```
 
 The existing production secret is reused. Optionally set `SUB2API_API_KEY`, `SUB2API_MODEL`, `SUB2API_WIRE_API`, and `SUB2API_BASE_URL` instead (these take precedence). The Codex config uses `env_key = "SUB2API_API_KEY"`; this is the **CLI** environment-variable name, not a required website key name. Keep credentials server-side only. Never set `NEXT_PUBLIC_` secrets.
 
-The web backend sends `POST https://api.miaoquai.com/v1/responses` with `model: deepseek-v4-pro`, `instructions`, `input`, and JSON-output mode. It supports legacy `openai` and `anthropic` protocols if explicitly configured. Responses are stateless, and the application does not store AI response data or user names at the provider.
+The web backend sends `POST https://api.miaoquai.com/v1/responses` with `model: deepseek-v4-pro-ga-260813`, `instructions`, `input`, and JSON-output mode. It supports legacy `openai` and `anthropic` protocols if explicitly configured. Responses are stateless, and the application does not store AI response data or user names at the provider.
 
 The UI displays **DeepSeek AI reviewed** only when the upstream model actually selects four distinct, allowed universities. A labelled **Rules-based analysis** is shown on 503, timeout, malformed output, or unavailable credentials. Academic data only (CGPA, pillar, track preferences, interests, target term, region) is sent to the provider; names, student IDs, and passports are excluded. The evidence-filtered candidate list and historical mapping provenance always remain server-validated.
 
