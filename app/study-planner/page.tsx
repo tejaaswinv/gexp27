@@ -157,7 +157,7 @@ export default function StudyPlanner(){
   }catch(e){setNotification(e instanceof Error?e.message:'Invalid plan JSON')}
   event.currentTarget.value='';
  };
- if(!hydrated)return <main className="degree-page"><p className="degree-loading">Preparing your study planner…</p></main>;
+ if(!hydrated)return <main className="degree-page"><section className="degree-intro"><div><span className="degree-eyebrow">STUDY PLAN STUDIO</span><h1>Eight terms, one clear plan.</h1><p>Loading your saved course roadmap and curriculum details…</p></div></section></main>;
  return <main className="degree-page">
   <header className="degree-nav">
    <Link href="/" className="degree-logo"><span className="degree-brand-icon"><GraduationCap size={21}/></span>
