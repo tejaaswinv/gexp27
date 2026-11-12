@@ -4,6 +4,7 @@ export const profileSchema=z.object({
  name:z.string().trim().min(2).max(100),studentId:z.string().max(25).default(''),
  gpa:z.number().min(0).max(5),pillar:z.enum(['CSD','DAI','EPD','ESD','ASD']),
  tracks:z.array(z.string().max(60)).max(8).default([]), secondMajorHdi:z.boolean(),
+ matriculationYear:z.number().int().min(2020).max(2027).default(2025), hdiDomain:z.string().max(60).default(''),
  interests:z.string().max(700).default(''),region:z.string().max(60).default('Any'),
  term:z.enum(['fall','spring']),passport:z.string().max(80).default(''),
  homePlan:z.object({
