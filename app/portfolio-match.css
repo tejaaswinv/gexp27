@@ -332,3 +332,175 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
   .browse-card,.resource-card,.uni-choice,.btn,.storybook-back{transition:none!important}
   .browse-card:hover,.resource-card:hover,.uni-choice:hover,.storybook-back:hover,.btn:hover{transform:none}
 }
+
+
+/* Mobile refinement / November 2026
+   Avoid native emoji presentation: all ornaments are Lucide SVGs.
+   Keep the planner visible quickly on small screens. */
+.storybook-brand-glyph span{
+  display:inline-flex;align-items:center;justify-content:center;
+  vertical-align:middle;margin-left:3px;transform:rotate(-17deg);
+  color:#b47b52;
+}
+.storybook-brand-glyph svg{display:block}
+.hero-tiny-star{display:inline-flex;align-items:center;justify-content:center;color:#b27d54}
+.chapter-separator{width:23px;height:1px;background:#d4cbb7;display:inline-block;flex:0 0 auto}
+.storyworld-spark{display:flex;align-items:center;justify-content:center}
+.postcard-foot>span{display:inline-flex;align-items:center;color:#b7804e}
+.data-asterisk{display:flex;align-items:center;justify-content:center;color:#a77b53}
+.site-footer>div>svg{flex:0 0 auto;color:#b18057}
+.hero-content>p{margin-bottom:24px}
+.hero-start{
+  display:inline-flex;align-items:center;justify-content:space-between;gap:22px;
+  min-height:51px;max-width:100%;
+  padding:0 18px 0 21px;
+  background:#345741;color:#fffdf6;
+  border:1px solid #345741;border-radius:12px;
+  box-shadow:0 7px 17px rgba(48,78,53,.14);
+  font-size:13px;font-weight:800;
+  transition:transform .3s var(--storybook-ease),background .3s var(--storybook-ease);
+}
+.hero-start:hover{background:#527459;transform:translateY(-2px)}
+.hero-start:active{transform:scale(.99)}
+.hero-start svg{flex:0 0 auto}
+.hero-meta{margin-top:17px}
+#planner-form,#results{scroll-margin-top:25px}
+.uni-flag,.browse-flag{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:45px;height:45px;background:#e8eee0;
+  border:1px solid #d7e1d0;border-radius:12px;color:#426d50;
+  font-size:inherit;
+}
+.uni-flag svg,.browse-flag svg{display:block}
+.country-tag{display:inline-flex;align-items:center;gap:7px}
+.country-tag svg{color:#6a8a68}
+.browse-flag{margin-bottom:14px}
+@media(max-width:900px) {
+  /* Sticky header inside an overflow-clipped shell became unreliable on iOS Safari. */
+  .site-shell{overflow:visible}
+  .storybook-header{position:relative;top:auto;margin:14px 0 0;min-height:66px}
+  .storybook-mobile-links{
+    position:absolute;top:calc(100% + 8px);right:18px;z-index:80;
+    margin:0;max-width:calc(100vw - 36px);
+  }
+  .storybook-nav{width:calc(100% - 36px)}
+  .hero{padding:39px 4px 36px;width:calc(100% - 38px);gap:28px}
+  .hero h1{font-size:clamp(47px,8vw,67px)}
+  .hero-tag{margin-bottom:20px}
+  .storyworld{min-height:340px;aspect-ratio:1.35}
+  .browse-page,.resources-page{padding-top:45px}
+  .workspace-layout{padding-top:12px}
+}
+@media(max-width:650px) {
+  .storybook-header{margin-top:10px;min-height:62px}
+  .storybook-nav{
+    min-height:62px;padding:8px 9px 8px 14px;
+    border-radius:17px;gap:8px;
+    box-shadow:0 7px 20px rgba(53,68,47,.085)
+  }
+  .storybook-brand{gap:9px}
+  .storybook-brand-glyph{font-size:32px}
+  .storybook-brand-glyph svg{width:17px;height:17px}
+  .storybook-brand-copy{font-size:15px;letter-spacing:-.055em}
+  .storybook-brand-copy small{font-size:7px;letter-spacing:.11em;margin-top:4px}
+  .storybook-year{display:none}
+  .storybook-menu{width:41px;height:41px;border-radius:11px}
+  .hero{
+    width:calc(100% - 36px);
+    padding:34px 0 30px;
+    gap:23px;
+    min-height:0;
+  }
+  .hero-tag{margin-bottom:15px;font-size:10px;letter-spacing:.105em;gap:8px}
+  .hero-tiny-star svg{width:17px;height:17px}
+  .hero h1{
+    font-size:clamp(38px,9.7vw,54px);
+    line-height:1.06;
+    letter-spacing:-.065em;
+    margin-bottom:17px;
+  }
+  .hero h1 em{letter-spacing:-.07em}
+  .hero-content>p{font-size:13px;line-height:1.73;margin-bottom:19px}
+  .hero-start{
+    min-height:48px;
+    width:100%;justify-content:center;
+    font-size:12px;gap:14px;
+    box-shadow:0 5px 14px rgba(48,78,53,.12)
+  }
+  .hero-meta{margin-top:12px;gap:0}
+  .hero-meta span{font-size:10px;padding:0;background:none;border:0;gap:6px;color:#71836f}
+  .hero-meta span svg{width:14px;height:14px}
+  .hero-meta span:nth-child(2){display:none}
+  .hero-chapter-index{display:none}
+  .storyworld{
+    min-height:236px;
+    height:236px;
+    aspect-ratio:auto;
+    border-radius:17px;
+    box-shadow:0 7px 0 #e9e3d2,0 15px 25px rgba(48,77,52,.09);
+  }
+  .storyworld-sun{width:92px;height:92px;top:8%;right:15%;box-shadow:0 0 0 12px rgba(252,227,165,.27)}
+  .storyworld-cloud{width:80px;height:20px}
+  .storyworld-aircraft{width:32px;height:32px;top:25%}
+  .storyworld-aircraft svg{width:16px;height:16px}
+  .storyworld-spark svg{width:13px;height:13px}
+  .storyworld-postcard{
+    bottom:42px;left:7%;width:70%;
+    padding:12px 15px;
+    box-shadow:5px 7px 0 rgba(46,70,49,.12),0 10px 24px rgba(38,63,42,.08);
+    border-radius:5px;
+    transform:rotate(-4deg);
+  }
+  .postcard-kicker{font-size:8px;letter-spacing:.12em}
+  .postcard-title{font-size:25px;line-height:1.1;margin:9px 0 11px}
+  .postcard-foot{font-size:7px;letter-spacing:.08em;padding-top:9px}
+  .postcard-foot svg{width:12px;height:12px}
+  .storyworld-bottom{padding:11px 12px;font-size:8px;letter-spacing:.10em}
+  .workspace-layout{padding:12px 18px 46px}
+  #planner-form{scroll-margin-top:18px}
+  .form-card{padding:22px 18px}
+  .form-progress{margin-bottom:2px}
+  .progress-bars{margin:13px 0 25px}
+  .section-head{margin-bottom:23px}
+  .section-head h2{font-size:27px}
+  .field input,.field select,.field textarea,.input-icon input,.input-suffix input{font-size:16px}
+  .form-actions{gap:12px}
+  .form-footnote{flex-basis:100%;max-width:none}
+  .form-actions>.btn{min-height:50px;flex:1 1 130px;font-size:12px}
+  .result-summary{gap:14px}
+  .result-summary .summary-stat{min-width:0;max-width:100%}
+  .results-head h2{font-size:clamp(29px,8vw,38px)}
+  .universities-grid{grid-template-columns:1fr;gap:14px}
+  .uni-choice{min-height:186px;padding:17px 19px}
+  .uni-choice h4{font-size:17px;line-height:1.3;margin:9px 0}
+  .uni-flag{width:36px;height:36px;margin:10px 0 4px;border-radius:10px}
+  .uni-flag svg{width:19px;height:19px}
+  .confidence{font-size:8px;line-height:1.35}
+  .choice-bottom{margin-top:13px}
+  .choice-bottom b{font-size:17px}
+  .browse-page,.resources-page{padding-top:38px}
+  .browse-page h1,.resources-page h1{font-size:clamp(36px,9vw,49px)}
+  .browse-toolbar select{min-height:47px}
+  .browse-card,.resource-card{padding:21px}
+  .browse-flag{width:42px;height:42px;margin-bottom:12px}
+  .mapping-metrics{gap:14px}
+  .mapping-top{align-items:flex-start}
+  .country-tag{align-self:flex-start}
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .mapping-table{min-width:650px}
+  .site-footer{align-items:flex-start}
+}
+@media(max-width:390px) {
+  .hero h1{font-size:38px}
+  .hero{padding-top:29px}
+  .storyworld{height:210px;min-height:210px}
+  .storyworld-postcard{width:75%;bottom:39px}
+  .postcard-title{font-size:22px}
+  .storyworld-bottom{font-size:7px}
+  .storybook-brand-copy small{letter-spacing:.06em}
+  .uni-choice{min-height:185px}
+}
+@media(prefers-reduced-motion:reduce){
+  .hero-start{transition:none}
+  .hero-start:hover{transform:none}
+}
